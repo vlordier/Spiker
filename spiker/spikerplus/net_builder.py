@@ -16,6 +16,14 @@ import torch.nn as nn
 from .exceptions import LayerConfigError, NeuronModelError
 from .types import NeuronModel, ResetMechanism
 
+_LAYER_FC = "fc"
+_LAYER_IF = "if"
+_LAYER_LIF = "lif"
+_LAYER_SYN = "syn"
+_LAYER_RIF = "rif"
+_LAYER_RLIF = "rlif"
+_LAYER_RSYN = "rsyn"
+
 
 class SNN(nn.Module):
     """Spiking Neural Network.
@@ -73,7 +81,7 @@ class SNN(nn.Module):
                     raise NeuronModelError(msg) from None
 
                 if first:
-                    self.layers["fc" + idx] = nn.Linear(
+                    self.layers[f"{_LAYER_FC}{idx}"] = nn.Linear(
                         in_features=net_dict["n_inputs"],
                         out_features=layer_config["n_neurons"],
                         bias=False,
@@ -84,7 +92,7 @@ class SNN(nn.Module):
                     first = False
 
                 else:
-                    self.layers["fc" + idx] = nn.Linear(
+                    self.layers[f"{_LAYER_FC}{idx}"] = nn.Linear(
                         in_features=n_inputs_next,
                         out_features=layer_config["n_neurons"],
                         bias=False,
@@ -92,7 +100,7 @@ class SNN(nn.Module):
 
                     n_inputs_next = layer_config["n_neurons"]
 
-                name = neuron_model.value + idx
+                name = f"{neuron_model.value}{idx}"
 
                 match neuron_model:
                     case NeuronModel.IF:
@@ -159,21 +167,21 @@ class SNN(nn.Module):
         for layer in self.layers:
             idx = str(self.extract_index(layer))
 
-            if "fc" not in layer:
+            if _LAYER_FC not in layer:
                 self.mem_rec[layer] = []
                 self.syn_rec[layer] = []
                 self.spk_rec[layer] = []
 
-                if layer == "if" + idx or layer == "lif" + idx:
+                if layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
                     self.mem[layer] = self.layers[layer].reset_mem()
 
-                elif layer == "syn" + idx:
+                elif layer == f"{_LAYER_SYN}{idx}":
                     self.syn[layer], self.mem[layer] = self.layers[layer].reset_mem()
 
-                elif layer == "rif" + idx or layer == "rlif" + idx:
+                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
                     self.spk[layer], self.mem[layer] = self.layers[layer].reset_mem()
 
-                elif layer == "rsyn" + idx:
+                elif layer == f"{_LAYER_RSYN}{idx}":
                     self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
                         layer
                     ].reset_mem()
@@ -185,21 +193,21 @@ class SNN(nn.Module):
             layer: Name of the layer to record.
 
         """
-        if "fc" not in layer:
+        if _LAYER_FC not in layer:
             self.mem_rec[layer].append(self.mem[layer])
             self.spk_rec[layer].append(self.spk[layer])
 
-            if "syn" in layer:
+            if _LAYER_SYN in layer:
                 self.syn_rec[layer].append(self.syn[layer])
 
     def stack_rec(self) -> None:
         """Stack recordings into tensors."""
         for layer in self.layers:
-            if "fc" not in layer:
+            if _LAYER_FC not in layer:
                 self.mem_rec[layer] = torch.stack(self.mem_rec[layer], dim=0)
                 self.spk_rec[layer] = torch.stack(self.spk_rec[layer], dim=0)
 
-                if "syn" in layer:
+                if _LAYER_SYN in layer:
                     self.syn_rec[layer] = torch.stack(self.syn_rec[layer], dim=0)
 
     def extract_index(self, layer_name: str) -> int:
@@ -218,10 +226,11 @@ class SNN(nn.Module):
         index = re.findall(r"\d+", layer_name)
 
         if len(index) != 1:
-            error_msg = "Invalid layer name: " + str(layer_name)
-            error_msg += '. Use "layer_" + <integer layer index>\n'
-
-            raise ValueError(error_msg)
+            msg = (
+                f"Invalid layer name: {layer_name}. "
+                f'Use "layer_" + <integer layer index>'
+            )
+            raise ValueError(msg)
         return int(index[0])
 
     def forward(self, input_spikes: torch.Tensor) -> None:
@@ -250,7 +259,7 @@ class SNN(nn.Module):
             for layer in self.layers:
                 idx: str = str(self.extract_index(layer))
 
-                if "fc" in layer:
+                if _LAYER_FC in layer:
                     if first:
                         cur[layer] = self.layers[layer](input_spikes[step])
                         first = False
@@ -260,25 +269,25 @@ class SNN(nn.Module):
                         cur[layer] = self.layers[layer](self.spk[prev_layer])
                         prev_layer = layer
 
-                elif layer == "if" + idx or layer == "lif" + idx:
+                elif layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
                     self.spk[layer], self.mem[layer] = self.layers[layer](
                         cur[prev_layer], self.mem[layer]
                     )
                     prev_layer = layer
 
-                elif layer == "syn" + idx:
+                elif layer == f"{_LAYER_SYN}{idx}":
                     self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
                         layer
                     ](cur[prev_layer], self.syn[layer], self.mem[layer])
                     prev_layer = layer
 
-                elif layer == "rif" + idx or layer == "rlif" + idx:
+                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
                     self.spk[layer], self.mem[layer] = self.layers[layer](
                         cur[prev_layer], self.spk[layer], self.mem[layer]
                     )
                     prev_layer = layer
 
-                elif layer == "rsyn" + idx:
+                elif layer == f"{_LAYER_RSYN}{idx}":
                     self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
                         layer
                     ](

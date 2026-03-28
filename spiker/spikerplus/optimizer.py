@@ -19,6 +19,14 @@ from .net_builder import SNN, NetBuilder
 from .trainer import Trainer
 from .types import ReadoutType
 
+_LAYER_FC = "fc"
+_LAYER_IF = "if"
+_LAYER_LIF = "lif"
+_LAYER_SYN = "syn"
+_LAYER_RIF = "rif"
+_LAYER_RLIF = "rlif"
+_LAYER_RSYN = "rsyn"
+
 
 class Quantizer:
     """Fixed-point quantizer for neural network parameters.
@@ -164,7 +172,7 @@ class QuantSNN(SNN):
             for layer in self.layers:
                 idx = str(self.extract_index(layer))
 
-                if "fc" in layer:
+                if _LAYER_FC in layer:
                     if first:
                         cur[layer] = self.layers[layer](input_spikes[step])
                         first = False
@@ -172,22 +180,22 @@ class QuantSNN(SNN):
                     else:
                         cur[layer] = self.layers[layer](self.spk[prev_layer])
 
-                elif layer == "if" + idx or layer == "lif" + idx:
+                elif layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
                     self.spk[layer], self.mem[layer] = self.layers[layer](
                         cur[prev_layer], self.mem[layer]
                     )
 
-                elif layer == "syn" + idx:
+                elif layer == f"{_LAYER_SYN}{idx}":
                     self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
                         layer
                     ](cur[prev_layer], self.syn[layer], self.mem[layer])
 
-                elif layer == "rif" + idx or layer == "rlif" + idx:
+                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
                     self.spk[layer], self.mem[layer] = self.layers[layer](
                         cur[prev_layer], self.spk[layer], self.mem[layer]
                     )
 
-                elif layer == "rsyn" + idx:
+                elif layer == f"{_LAYER_RSYN}{idx}":
                     self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
                         layer
                     ](
