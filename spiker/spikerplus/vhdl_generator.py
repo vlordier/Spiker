@@ -30,7 +30,6 @@ class VhdlGenerator:
             net: Trained neural network.
             optim_config: Optimization configuration dictionary.
         """
-
         self.net = net
         self.optim_config = optim_config
 
@@ -40,7 +39,16 @@ class VhdlGenerator:
     def generate(
         self, functional: bool = True, interface: bool = False, debug: bool = False
     ) -> Network | FullAccelerator:
+        """Generate VHDL code for the network.
 
+        Args:
+            functional: Whether to generate functional VHDL code.
+            interface: Whether to generate the full accelerator with interface.
+            debug: Whether to include debug signals.
+
+        Returns:
+            Network or FullAccelerator VHDL code object.
+        """
         vhdl_net = Network(self.net.n_cycles, debug=debug)
         self.functional = functional
 
@@ -57,7 +65,14 @@ class VhdlGenerator:
         return FullAccelerator(vhdl_net, self.input_size, self.output_size)
 
     def input_size(self, layer: str) -> int:
+        """Compute input size for a layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Number of input neurons for the layer.
+        """
         if "fc" in layer:
             ff_w = self.extract_weights(layer)
 
@@ -66,7 +81,14 @@ class VhdlGenerator:
         raise ValueError("Cannot compute size. I need a linear layer")
 
     def output_size(self, layer: str) -> int:
+        """Compute output size for a layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Number of output neurons for the layer.
+        """
         if "fc" in layer:
             ff_w = self.extract_weights(layer)
 
@@ -75,7 +97,15 @@ class VhdlGenerator:
         raise ValueError("Cannot compute size. I need a linear layer")
 
     def init_layer(self, layer: str, ff_w: npt.NDArray[np.float64]) -> Layer:
+        """Initialize a VHDL layer from network layer.
 
+        Args:
+            layer: Layer name.
+            ff_w: Feed-forward weights array.
+
+        Returns:
+            Initialized VHDL Layer object.
+        """
         th = np.repeat(self.extract_threshold(layer), ff_w.shape[0])
         beta_shift = self.extract_beta(layer)
         reset = self.extract_reset(layer)
@@ -99,7 +129,14 @@ class VhdlGenerator:
         )
 
     def extract_weights(self, layer: str) -> npt.NDArray[np.float64] | None:
+        """Extract weights from a network layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Weight array or None if not available.
+        """
         if "weight" in dir(self.net.layers[layer]):
             return self.net.layers[layer].weight.data.cpu().numpy()
 
@@ -109,14 +146,28 @@ class VhdlGenerator:
         return None
 
     def extract_threshold(self, layer: str) -> npt.NDArray[np.float64] | None:
+        """Extract threshold from a network layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Threshold array or None if not available.
+        """
         if "threshold" in dir(self.net.layers[layer]):
             return np.array([self.net.layers[layer].threshold.data.item()])
 
         return None
 
     def extract_reset(self, layer: str) -> str | None:
+        """Extract reset mechanism from a network layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Reset mechanism string or None if not available.
+        """
         if "reset_mechanism" in dir(self.net.layers[layer]):
             reset = self.net.layers[layer].reset_mechanism
 
@@ -134,7 +185,17 @@ class VhdlGenerator:
         return None
 
     def extract_alpha(self, layer: str) -> int:
+        """Extract alpha decay parameter from a network layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Alpha shift value for VHDL.
+
+        Raises:
+            ValueError: If alpha is not a valid float or not in [0,1].
+        """
         if hasattr(self.net.layers[layer], "alpha"):
             alpha = self.net.layers[layer].alpha.data.item()
 
@@ -148,7 +209,17 @@ class VhdlGenerator:
         raise ValueError("Layer does not have alpha attribute")
 
     def extract_beta(self, layer: str) -> int:
+        """Extract beta decay parameter from a network layer.
 
+        Args:
+            layer: Layer name.
+
+        Returns:
+            Beta shift value for VHDL.
+
+        Raises:
+            ValueError: If beta is not a valid float or not in [0,1].
+        """
         if hasattr(self.net.layers[layer], "beta"):
             beta = self.net.layers[layer].beta.data.item()
 
@@ -162,6 +233,17 @@ class VhdlGenerator:
         raise ValueError("Layer does not have beta attribute")
 
     def pow2_shift(self, value: float) -> int:
+        """Calculate power-of-2 shift for fixed-point representation.
+
+        Args:
+            value: Value to compute shift for.
+
+        Returns:
+            Shift amount (log2 of value rounded).
+
+        Raises:
+            ValueError: If value is not positive.
+        """
         if value <= 0:
             raise ValueError("Value must be positive for log2 calculation")
         return round(log2(value))

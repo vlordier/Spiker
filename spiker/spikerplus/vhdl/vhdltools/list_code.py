@@ -2,13 +2,11 @@ from .format_text import indent
 
 
 def VHDLenum_list(objects_list : list, indent_level : int = 0) -> str:
-
-    """
-    Generate a string concatenating all the elements of a list of
+    """Generate a string concatenating all the elements of a list of
     objects, removing the last terminating character (; or ,).
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     objects_list    : list of objects.
         The object must implement the code() method.
     indent_level    : int, optional
@@ -19,7 +17,6 @@ def VHDLenum_list(objects_list : list, indent_level : int = 0) -> str:
     hdl_code    : str
         Generated string
     """
-
     hdl_code = ""
 
     i = 0
@@ -42,13 +39,11 @@ def VHDLenum_list(objects_list : list, indent_level : int = 0) -> str:
 
 
 def ListCode(objects_list : list, indent_level : int = 0) -> str:
-
-    """
-    Generate a string concatenating all the elements of a list of
+    """Generate a string concatenating all the elements of a list of
     objects.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     objects_list    : list of objects.
         The object must implement the code() method.
     indent_level    : int, optional
@@ -59,7 +54,6 @@ def ListCode(objects_list : list, indent_level : int = 0) -> str:
     hdl_code    : str
         Generated string
     """
-
     hdl_code = ""
 
     for element in objects_list:

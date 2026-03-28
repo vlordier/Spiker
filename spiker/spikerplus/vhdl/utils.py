@@ -3,15 +3,12 @@ from random import randint
 
 
 def createDir(dirName):
-
-    """
-    Create a new directory. If it already exists it is firstly remove.
+    """Create a new directory. If it already exists it is firstly remove.
 
     INPUT:
 
         dirName: string. Name of the directory to create
     """
-
     # Check if the directory exists
     cmdString = "if [[ -d " + dirName + " ]]; then "
 
@@ -95,9 +92,7 @@ def int_to_hex(value, width = 8, fill = 0):
 
 def fixed_point_array(numpyArray, bitwidth, fixed_point_decimals = 0,
     conv_type = "unsigned"):
-
-    '''
-    Convert a NumPy array into fixed point notation.
+    """Convert a NumPy array into fixed point notation.
 
     INPUT:
 
@@ -106,8 +101,7 @@ def fixed_point_array(numpyArray, bitwidth, fixed_point_decimals = 0,
         2) fixed_point_decimals: number of decimal bits in the fixed
         point representation.
 
-    '''
-
+    """
     numpyArray = numpyArray * 2**fixed_point_decimals
     fp_array = numpyArray.astype(int)
 

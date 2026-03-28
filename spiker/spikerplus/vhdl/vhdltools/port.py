@@ -3,22 +3,18 @@ from .format_text import indent
 
 
 class PortObj:
+    """VHDL port definition.
 
-    """
-    VHDL port definition.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the string to declare the port
 
     """
 
     def __init__(self, name : str, direction : str, port_type : str,
             value : str = ""):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         name        : str
             Name of the port
         direction   : str
@@ -28,7 +24,6 @@ class PortObj:
         value       : str
             Default value connected to the port
         """
-
         self.name = name
         self.direction = direction
         self.port_type = port_type
@@ -36,16 +31,13 @@ class PortObj:
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string to declare the port
 
-        """
-        Generate the string to declare the port
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         # No default value
         if (not(self.value) or self.direction == "out"):
             hdl_code = indent(indent_level) + ("%s : %s %s;\n" %
@@ -60,12 +52,10 @@ class PortObj:
 
 
 class PortList(dict):
+    """Dictionary of VHDL ports.
 
-    """
-    Dictionary of VHDL ports.
-
-    Methods:
-    --------
+    Methods
+    -------
     add(name, gen_type, value)  : add a port object to the dictionary
     code(indent_level = 0)      : generate the string to declare all the
                     ports
@@ -73,12 +63,10 @@ class PortList(dict):
 
     def add(self, name : str, direction : str, port_type : str,
             value : str = ""):
+        """Add a port object to the dictionary.
 
-        """
-        Add a port object to the dictionary.
-
-        Parameters:
-        -----------
+        Parameters
+        ----------
         name        : str
             Name of the port
         direction   : str
@@ -88,19 +76,15 @@ class PortList(dict):
         value       : str
             Default value connected to the port
         """
-
         self[name] = PortObj(name, direction, port_type, value)
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string to declare all the ports
 
-        """
-        Generate the string to declare all the ports
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         return VHDLenum(self, indent_level)

@@ -3,43 +3,33 @@ from .format_text import indent
 
 
 class ComponentObj:
+    """VHDL component definition.
 
-    """
-    VHDL component definition.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the string to declare the component
 
     """
 
-
     def __init__(self, vhdl_block):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         name        : str
             Name of the component
         """
-
         self.name = vhdl_block.entity.name
         self.generic = vhdl_block.entity.generic
         self.port = vhdl_block.entity.port
 
 
     def code(self, indent_level : int = 0):
+        """Generate the string to declare the component
 
-        """
-        Generate the string to declare the component
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
-
         hdl_code = ""
         hdl_code = hdl_code + indent(indent_level) + \
                 ("component %s is\n" % self.name)
@@ -75,14 +65,11 @@ class ComponentList(dict):
         self[vhdl_block.entity.name] = ComponentObj(vhdl_block)
 
     def code(self, indent_level : int = 0):
+        """Generate the string to declare all the components
 
-        """
-        Generate the string to declare all the components
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         return DictCode(self, indent_level)

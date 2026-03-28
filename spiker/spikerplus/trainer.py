@@ -148,7 +148,7 @@ class Trainer:
             data = data.permute(1, 0, 2).to(self.device)
             labels = labels.to(self.device)
 
-            self.optimizer.zero_grad()
+            self.optimizer.zero_grad(set_to_none=True)
 
             self.net.train()
 

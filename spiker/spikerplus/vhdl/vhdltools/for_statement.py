@@ -4,22 +4,18 @@ from .text import GenericCodeBlock
 
 
 class For:
+    """VHDL for loop.
 
-    """
-    VHDL for loop.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the string of the for loop
     """
 
     def __init__(self, name : str = "", start : int = 0, stop : int = 1,
             iter_name : str= "i", direction : str= "up",
             loop_type = "loop"):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         name        : str, optional
             Name of the loop.
         start       : int, optional
@@ -31,7 +27,6 @@ class For:
         direction   : str, optional
             Direction of the loop. Can be "up" or "down"
         """
-
         self.name = name
         self.start = start
         self.stop = stop
@@ -41,16 +36,13 @@ class For:
         self.loop_type = loop_type
 
     def code(self, indent_level = 0):
+        """Generate the for loop string
 
-        """
-        Generate the for loop string
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         hdl_code = ""
 
 

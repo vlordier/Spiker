@@ -4,37 +4,28 @@ from .text import GenericCodeBlock
 
 
 class Condition:
+    """VHDL condition for if/elsif statements.
 
-    """
-    VHDL condition for if/elsif statements.
-
-    Methods:
-    --------
+    Methods
+    -------
     code()  : generate the string of thecondition
     """
 
-
     def __init__(self, condition : str, cond_type : str = ""):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         condition   :str
             Condition for the if/elsif statement
 
         cond_type   : str, optional
             Type of the condition. Can be empty, "and" or "or"
         """
-
         self.condition = condition
         self.cond_type = cond_type
 
     def code(self) -> str:
-
+        """Generate the condition string.
         """
-        Generate the condition string.
-        """
-
         # Normal condition
         if not(self.cond_type):
             hdl_code = self.condition + " "
@@ -74,38 +65,30 @@ class ConditionsList(dict):
     """
 
     def add(self, condition : str, cond_type : str = ""):
+        """Add a condition object to the dictionary.
 
-        """
-        Add a condition object to the dictionary.
-
-        Parameters:
-        -----------
+        Parameters
+        ----------
         condition   : str
             Condition for the if/elsif statement
         cond_type   : str
             Type of the condition. Can be empty, "and" or "or"
         """
-
         self[self.index] = Condition(condition, cond_type)
         self.index = self.index + 1
 
 
     def code(self) -> str:
-
+        """Generate the condition string.
         """
-        Generate the condition string.
-        """
-
         return VHDLenum(self)
 
 
 class If_block:
+    """VHDL if block.
 
-    """
-    VHDL if block.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the if statement string
     """
 
@@ -115,17 +98,13 @@ class If_block:
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the if statement string
 
-        """
-        Generate the if statement string
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
-
         hdl_code = ""
 
         # Generate code only if the condition and body contain something
@@ -140,12 +119,10 @@ class If_block:
 
 
 class Elsif_block:
+    """VHDL elsif block.
 
-    """
-    VHDL elsif block.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the elsif statement string
     """
 
@@ -155,16 +132,13 @@ class Elsif_block:
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the elsif statement string
 
-        """
-        Generate the elsif statement string
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         hdl_code = ""
 
         # Generate code only if the condition and body contain something
@@ -179,12 +153,10 @@ class Elsif_block:
 
 
 class Elsif_list(dict):
+    """Dictionary of VHDL elsif statements.
 
-    """
-    Dictionary of VHDL elsif statements.
-
-    Methods:
-    --------
+    Methods
+    -------
     add()           : add an empty elsif statement to the dictionary
     code(indent_level = 0)  : generate the string to declare all the
                 elsif statements
@@ -194,54 +166,42 @@ class Elsif_list(dict):
         self.index = 0
 
     def add(self):
-
+        """Add an empty elsif statement to the dictionary
         """
-        Add an empty elsif statement to the dictionary
-        """
-
         self[self.index] = Elsif_block()
         self.index = self.index + 1
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string with all the elsif statements
 
-        """
-        Generate the string with all the elsif statements
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         return DictCode(self, indent_level)
 
 
 class Else_block:
+    """VHDL else block.
 
-    """
-    VHDL else block.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the else statement string
     """
-
 
     def __init__(self):
         self.body = GenericCodeBlock()
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the else string
 
-        """
-        Generate the else string
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         hdl_code = ""
 
         # Generate code only if the body contains something
@@ -253,15 +213,12 @@ class Else_block:
 
 
 class If:
+    """VHDL complete if statement.
 
-    """
-    VHDL complete if statement.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the full if statement string
     """
-
 
     def __init__(self):
         self._if_ = If_block()
@@ -269,17 +226,13 @@ class If:
         self._else_ = Else_block()
 
     def code(self, indent_level = 0):
+        """Generate the full if statement string
 
-        """
-        Generate the full if statement string
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
-
         hdl_code = ""
 
         # Generate only if there is an if statement

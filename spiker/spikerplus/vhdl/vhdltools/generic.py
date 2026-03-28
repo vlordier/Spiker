@@ -3,20 +3,16 @@ from .format_text import indent
 
 
 class GenericObj:
+    """VHDL generic definition.
 
-    """
-    VHDL generic definition.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the string to declare the generic
     """
 
     def __init__(self, name : str, gen_type : str, value : str = ""):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         name        : str
             Name of the generic variable
         gen_type    : str
@@ -24,22 +20,18 @@ class GenericObj:
         value       : str
             Default value of the generic variable
         """
-
         self.name = name
         self.gen_type = gen_type
         self.value = value
 
     def code(self, indent_level : int = 0):
+        """Generate the string to declare the generic
 
-        """
-        Generate the string to declare the generic
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         if self.value:
 
             # Assign a default value to the generic
@@ -56,24 +48,20 @@ class GenericObj:
 
 
 class GenericList(dict):
+    """Dictionary of generic variables.
 
-    """
-    Dictionary of generic variables.
-
-    Methods:
-    --------
+    Methods
+    -------
     add(name, gen_type, value)  : add a generic object to the dictionary
     code(indent_level = 0)      : generate the string to declare all the
                     generics
     """
 
     def add(self, name : str, gen_type : str, value : str = ""):
+        """Add a generic object to the dictionary.
 
-        """
-        Add a generic object to the dictionary.
-
-        Parameters:
-        -----------
+        Parameters
+        ----------
         name        : str
             Name of the generic variable
         gen_type    : str
@@ -81,19 +69,15 @@ class GenericList(dict):
         value       : str
             Default value of the generic variable
         """
-
         self[name] = GenericObj(name, gen_type, value)
 
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string to declare all the generics
 
-        """
-        Generate the string to declare all the generics
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         return VHDLenum(self, indent_level)

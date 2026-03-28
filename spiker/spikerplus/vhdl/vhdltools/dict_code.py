@@ -2,13 +2,11 @@ from .format_text import indent
 
 
 def VHDLenum(objects_dict : dict, indent_level : int = 0) -> str:
-
-    """
-    Generate a string concatenating all the elements of a dictionary of
+    """Generate a string concatenating all the elements of a dictionary of
     objects, removing the last terminating character (; or ,).
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     objects_dict    : dictionary of objects.
         The object must implement the code() method.
     indent_level    : int, optional
@@ -19,7 +17,6 @@ def VHDLenum(objects_dict : dict, indent_level : int = 0) -> str:
     hdl_code    : str
         Generated string
     """
-
     hdl_code = ""
 
     i = 0
@@ -44,13 +41,11 @@ def VHDLenum(objects_dict : dict, indent_level : int = 0) -> str:
 
 
 def DictCode(objects_dict : dict, indent_level : int = 0) -> str:
-
-    """
-    Generate a string concatenating all the elements of a dictionary of
+    """Generate a string concatenating all the elements of a dictionary of
     objects.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     objects_dict    : dictionary of objects.
         The object must implement the code() method.
     indent_level    : int, optional
@@ -61,7 +56,6 @@ def DictCode(objects_dict : dict, indent_level : int = 0) -> str:
     hdl_code    : str
         Generated string
     """
-
     hdl_code = ""
 
     for key in objects_dict:

@@ -29,11 +29,8 @@ class WhenList(dict):
         self[choice] = When(choice)
 
     def code(self, indent_level = 0) -> str:
-
+        """Generate the condition string.
         """
-        Generate the condition string.
-        """
-
         return DictCode(self, indent_level)
 
 class Case:

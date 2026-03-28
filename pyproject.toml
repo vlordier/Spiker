@@ -43,7 +43,15 @@ Documentation = "https://github.com/smilies-polito/Spiker#readme"
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
-dev = ["ruff>=0.6.0", "pre-commit>=3.0", "pyupgrade>=3.0.0", "mdformat>=0.7.0", "typos>=1.0.0"]
+dev = [
+    "ruff>=0.6.0",
+    "pre-commit>=3.0",
+    "pyupgrade>=3.0.0",
+    "mdformat>=0.7.0",
+    "typos>=1.0.0",
+    "pdoc>=14.0",
+]
+docs = ["pdoc>=14.0"]
 
 # Explicitly define where packages are located to avoid flat-layout issues
 [tool.setuptools.packages.find]
@@ -108,6 +116,9 @@ select = [
     "PERF",   # perflint
     "FURB",   # refurb
     "RUF",    # ruff-specific
+    "D",      # pydocstyle (docstrings)
+    "ANN",    # flake8-annotations
+    "FBT",    # flake8-boolean-trap
 ]
 ignore = [
     "S101",    # Use of assert (ok in tests)
@@ -137,15 +148,21 @@ ignore = [
     "Q004",    # Unnecessary escape on inner quote character
     "LOG015",  # warning/info call on root logger
     "PLR0402", # Use from torch import nn in lieu of alias
-    "PTH110",  # os.path.exists should be replaced by Path.exists
-    "PTH103",  # os.makedirs should be replaced by Path.mkdir
-    "PTH112",  # os.path.isdir should be replaced by Path.is_dir
-    "PTH118",  # os.path.join should be replaced by Path with / operator
-    "PTH208",  # Use pathlib.Path.iterdir instead
-    "ANN",     # All annotation rules (too strict for existing code)
-    "ARG",     # All unused arguments rules
     "DJ",      # flake8-django (not applicable)
     "RUF022",  # __all__ is not sorted (style preference)
+    "D100",    # Missing docstring in public module
+    "D104",    # Missing docstring in public package
+    "D107",    # Missing docstring in __init__
+    "D413",    # Missing blank line after last section
+    "D415",    # First line should end with a period, question mark, or exclamation point
+    "ANN401",  # Dynamically typed expressions (typing.Any)
+    "ANN002",  # Missing type annotation for *args
+    "ANN003",  # Missing type annotation for **kwargs
+    "PTH208",  # Use pathlib.Path.iterdir() instead
+    "PTH118",  # os.path.join() should be replaced by Path with / operator
+    "PTH112",  # os.path.isdir() should be replaced by Path.is_dir()
+    "PTH110",  # os.path.exists should be replaced by Path.exists
+    "PTH103",  # os.makedirs should be replaced by Path.mkdir
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -213,71 +230,16 @@ ignore = [
     "RUF015",  # Prefer next(iter()) over single element slice
     "RUF046",  # Value being cast to int is already an integer
     "PTH113",  # os.path.isfile should be replaced by Path.is_file
-]
-"spiker/spikerplus/vhdl/vhdltools/*.py" = [
-    "B006",    # Mutable default arguments
-    "B008",    # Function call in default argument
-    "ARG002",  # Unused method argument
-    "TRY003",  # Long exception messages
-    "N801",    # Class naming convention
-    "B007",    # Unused loop control variable
-    "ANN",     # All annotation rules
-    "PLR0912", # Too many branches
-    "PLR0915", # Too many statements
-    "C901",    # Too complex
-    "EM101",   # Exception must not use a string literal
-    "Q003",    # Change outer quotes to avoid escaping inner quotes
-    "Q004",    # Unnecessary escape on inner quote character
-    "ISC003",  # Explicitly concatenated string should be implicitly concatenated
-    "PLR1714", # Consider merging multiple comparisons
-    "PIE804",  # Unnecessary dict kwargs
-    "PERF102", # When using only the values of a dict use the values() method
-    "T201",    # print found
-    "PLR1722", # Use sys.exit() instead of exit
-    "LOG015",  # warning/info call on root logger
-    "PLR0402", # Use from torch import nn in lieu of alias
-    "RUF022",  # __all__ is not sorted
-    "F401",    # Unused imports (for re-exports)
-    "N802",    # Function naming convention
-    "N803",    # Argument naming convention
-    "N806",    # Variable naming convention
-    "A002",    # Function argument shadowing a Python builtin
-    "C408",    # Unnecessary dict call
-    "PIE790",  # Unnecessary pass statement
-    "RET504",  # Unnecessary assignment before return
-    "UP031",   # Use format specifiers instead of percent format
-    "ISC002",  # Implicitly concatenated string literals
-    "Q000",    # Single quotes found but double quotes preferred
-    "Q002",    # Single quote docstring found but double quotes preferred
-    "E711",    # Comparison to None should be is None
-    "E712",    # Avoid equality comparisons to False
-    "PTH123",  # open() should be replaced by Path.open()
-    "FURB122", # Use of file.write in a for loop
-    "S602",    # subprocess call with shell=True
-    "S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
-    "PERF401", # Use list.extend to create a transformed list
-    "TRY300",  # Consider moving this statement to an else block
-    "G002",    # Logging statement uses %
-    "ISC002",  # Implicitly concatenated string literals over multiple lines
-    "RUF013",  # PEP 484 prohibits implicit Optional
-    "F821",    # Undefined name (existing code issues)
-    "F841",    # Local variable assigned but never used
-    "E501",    # Line too long
-    "SIM113",  # Use enumerate() for index variable
-    "SIM108",  # Use ternary operator
-    "TD002",   # Missing author in TODO
-    "TD003",   # Missing issue link for TODO
-    "TD005",   # Missing issue description after TODO
-    "TD006",   # Invalid TODO capitalization
-    "FIX002",  # Line contains TODO
-    "B905",    # zip() without explicit strict parameter
-    "E721",    # Use is and is not for type comparisons
-    "PERF402", # Use list or list.copy to create a copy
-    "RET503",  # Missing explicit return
-    "RUF015",  # Prefer next(iter()) over single element slice
-    "RUF046",  # Value being cast to int is already an integer
-    "PTH113",  # os.path.isfile should be replaced by Path.is_file
     "W291",    # Trailing whitespace
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+    "D200",    # One-line docstring should fit on one line
+    "D205",    # 1 blank line required between summary line and description
+    "D400",    # First line should end with a period
+    "D401",    # First line of docstring should be in imperative mood
+    "D413",    # Missing blank line after last section
+    "D415",    # First line should end with a period, question mark, or exclamation point
 ]
 
 [tool.ruff.format]

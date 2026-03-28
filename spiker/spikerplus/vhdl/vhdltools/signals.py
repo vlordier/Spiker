@@ -3,20 +3,16 @@ from .format_text import indent
 
 
 class SignalObj:
+    """Declare a VHDL signal.
 
-    """
-    Declare a VHDL signal.
-
-    Methods:
-    --------
+    Methods
+    -------
     code(indent_level = 0)  : generate the string to declare the signal
     """
 
     def __init__(self, name : str, signal_type : str, *args : str):
-
-        """
-        Parameters:
-        -----------
+        """Parameters
+        ----------
         name        : str
             Name of the signal
         signal_type : str
@@ -25,7 +21,6 @@ class SignalObj:
             List of default values connected to the signal. In
             practice only the first is used.
         """
-
         self.name = name
         self.signal_type = signal_type
 
@@ -35,16 +30,13 @@ class SignalObj:
             self.value = ""
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string to declare the signal
 
-        """
-        Generate the string to declare the signal
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         # Default value
         if self.value:
             return indent(indent_level) + ("signal %s : %s := \
@@ -57,12 +49,10 @@ class SignalObj:
 
 
 class SignalList(dict):
+    """Dictionary of VHDL signals.
 
-    """
-    Dictionary of VHDL signals.
-
-    Methods:
-    --------
+    Methods
+    -------
     add(name, signal_type, *args)   : add a signal object to the 
                     dictionary
     code(indent_level = 0)      : generate the string to declare all the
@@ -70,12 +60,10 @@ class SignalList(dict):
     """
 
     def add(self, name, signal_type, *args):
+        """Add a signal object to the dictionary.
 
-        """
-        Add a signal object to the dictionary.
-
-        Parameters:
-        -----------
+        Parameters
+        ----------
         name        : str
             Name of the signal
         signal_type : str
@@ -85,18 +73,14 @@ class SignalList(dict):
             practice only the first is used.
 
         """
-
         self[name] = SignalObj(name, signal_type, *args)
 
     def code(self, indent_level : int = 0) -> str:
+        """Generate the string to declare all the signals
 
-        """
-        Generate the string to declare all the signals
-
-        Parameters:
+        Parameters
         ----------
         indent_level    : int
             Level of indentation to insert before the string
         """
-
         return DictCode(self, indent_level)

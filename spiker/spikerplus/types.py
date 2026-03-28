@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, TypedDict
 
 
 class NeuronModel(Enum):
@@ -347,3 +347,54 @@ class QuantizationConfig:
             weights_bw=data.get("weights_bw", cls.weights_bw),
             fp_dec=data.get("fp_dec", cls.fp_dec),
         )
+
+
+class LayerDict(TypedDict, total=False):
+    """Typed dictionary for layer configuration."""
+
+    n_neurons: int
+    neuron_model: str
+    threshold: float
+    learn_threshold: bool
+    reset_mechanism: str
+    alpha: float
+    learn_alpha: bool
+    beta: float
+    learn_beta: bool
+
+
+class OptimizerRangeDict(TypedDict, total=False):
+    """Typed dictionary for optimizer range configuration."""
+
+    min: int
+    max: int
+
+
+class OptimizerDict(TypedDict, total=False):
+    """Typed dictionary for optimizer configuration."""
+
+    weights_bw: OptimizerRangeDict
+    neurons_bw: OptimizerRangeDict
+    fp_dec: OptimizerRangeDict
+
+
+class NetworkDict(TypedDict, total=False):
+    """Typed dictionary for network configuration."""
+
+    n_cycles: int
+    n_inputs: int
+    layer_0: LayerDict
+    layer_1: LayerDict
+    layer_2: LayerDict
+    layer_3: LayerDict
+    layer_4: LayerDict
+
+
+class TrainingDict(TypedDict, total=False):
+    """Typed dictionary for training configuration."""
+
+    n_epochs: int
+    readout_type: str
+    learning_rate: float
+    adam_beta1: float
+    adam_beta2: float
