@@ -1,3 +1,17 @@
+"""Spiker: Spiking Neural Network Framework.
+
+A framework for building, training, and deploying spiking neural networks
+with support for hardware generation (VHDL) and quantization.
+
+This package provides:
+- Network building with various neuron models (LIF, IF, Synaptic, etc.)
+- Training with multiple readout strategies
+- Quantization-aware optimization
+- VHDL generation for hardware deployment
+- Type-safe configuration with enums and dataclasses
+- Input validation and custom exceptions
+"""
+
 from .exceptions import (
     DataLoaderError as DataLoaderError,
 )
