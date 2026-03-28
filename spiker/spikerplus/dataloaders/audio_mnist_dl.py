@@ -1,4 +1,8 @@
+"""Audio MNIST dataset loader for Spiker framework."""
+
 import os
+from collections.abc import Callable
+from pathlib import Path
 
 import torch
 import torch.nn.functional as fn
@@ -7,19 +11,35 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 
 class AudioMnistDL:
+    """Audio MNIST dataset loader.
+
+    Loads and preprocesses the Audio MNIST dataset for spike-based neural networks.
+    Converts audio waveforms to mel spectrograms and optionally spikifies them.
+    """
+
     def __init__(
         self,
-        data_dir,
-        fft_window=25e-3,  # s
-        hop_length_s=10e-3,  # s
-        n_channels=40,
-        spiking_thresh=0.9,
-        transform="default",
-        train_size=0.8,
-    ):
+        data_dir: str | Path,
+        fft_window: float = 25e-3,  # s
+        hop_length_s: float = 10e-3,  # s
+        n_channels: int = 40,
+        spiking_thresh: float = 0.9,
+        transform: Callable | str = "default",
+        train_size: float = 0.8,
+    ) -> None:
+        """Initialize Audio MNIST dataset loader.
 
+        Args:
+            data_dir: Directory containing the dataset.
+            fft_window: Short Term Fourier Transform window size in seconds.
+            hop_length_s: Step size between windows in seconds.
+            n_channels: Number of mel filterbank channels.
+            spiking_thresh: Threshold for converting to spike trains.
+            transform: Transform to apply to waveforms, or "default" for mel filterbank.
+            train_size: Proportion of data to use for training (0-1).
+        """
         # Input data sample rate
-        self.sample_rate = 48e3  # Hz
+        self.sample_rate: float = 48e3  # Hz
 
         # Short Term Fourier Transform (STFT) window
         self.fft_window = fft_window
@@ -34,7 +54,7 @@ class AudioMnistDL:
         self.spiking_thresh = spiking_thresh
 
         if transform == "default":
-            self.transform = MelFilterbank(
+            self.transform: Callable = MelFilterbank(
                 sample_rate=self.sample_rate,
                 fft_window=self.fft_window,
                 hop_length_s=self.hop_length_s,
@@ -50,7 +70,7 @@ class AudioMnistDL:
 
         self.dataset = CustomDataset(root_dir=data_dir, transform=self.transform)
 
-        self.num_cpu_cores = os.cpu_count()
+        self.num_cpu_cores: int | None = os.cpu_count()
 
         # Train/test split
         train_len = int(train_size * len(self.dataset))
@@ -63,14 +83,26 @@ class AudioMnistDL:
 
     def load(
         self,
-        train_drop_last=True,
-        train_shuffle=True,
-        test_drop_last=True,
-        test_shuffle=True,
-        batch_size=64,
-        num_workers=None,
-    ):
+        train_drop_last: bool = True,
+        train_shuffle: bool = True,
+        test_drop_last: bool = True,
+        test_shuffle: bool = True,
+        batch_size: int = 64,
+        num_workers: int | None = None,
+    ) -> tuple[DataLoader, DataLoader]:
+        """Load train and test dataloaders.
 
+        Args:
+            train_drop_last: Whether to drop last incomplete training batch.
+            train_shuffle: Whether to shuffle training data.
+            test_drop_last: Whether to drop last incomplete test batch.
+            test_shuffle: Whether to shuffle test data.
+            batch_size: Batch size for dataloaders.
+            num_workers: Number of worker processes for data loading.
+
+        Returns:
+            Tuple of (train_loader, test_loader).
+        """
         if not num_workers:
             num_workers = self.num_cpu_cores
 
@@ -94,20 +126,30 @@ class AudioMnistDL:
 
 
 class CustomDataset(Dataset):
-    def __init__(self, root_dir, transform=None, max_length=35000):
-        """
-        Args:
-            root_dir    : str. Directory containing
-                    subdirectories, one for each user
+    """Custom dataset for Audio MNIST.
 
-            transform   : callable, optional. Transform to be
-                    applied on a sample.
+    Loads WAV files from a directory structure where each subdirectory
+    corresponds to a different speaker/user.
+    """
+
+    def __init__(
+        self,
+        root_dir: str | Path,
+        transform: Callable | None = None,
+        max_length: int = 35000,
+    ) -> None:
+        """Initialize custom dataset.
+
+        Args:
+            root_dir: Directory containing subdirectories, one for each user.
+            transform: Optional transform to apply to waveforms.
+            max_length: Maximum waveform length (samples will be padded/truncated).
         """
         self.root_dir = root_dir
         self.transform = transform
         self.max_length = max_length
 
-        self.data = []
+        self.data: list[tuple[str, int]] = []
 
         # Loop over all the users' directories
         for user_folder in os.listdir(root_dir):
@@ -122,11 +164,19 @@ class CustomDataset(Dataset):
                         label = int(file_name.split("_")[0])
                         self.data.append((file_path, label))
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return the number of samples in the dataset."""
         return len(self.data)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int | torch.Tensor) -> tuple[torch.Tensor, int]:
+        """Get a sample from the dataset.
 
+        Args:
+            idx: Index of the sample to retrieve.
+
+        Returns:
+            Tuple of (waveform, label).
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
@@ -154,18 +204,35 @@ class CustomDataset(Dataset):
 
 
 class MelFilterbank:
+    """Mel filterbank transform for audio preprocessing.
+
+    Converts audio waveforms to mel spectrograms with optional
+    dB scaling, normalization, and spike conversion.
+    """
+
     def __init__(
         self,
-        sample_rate=48e3,
-        fft_window=25e-3,
-        hop_length_s=10e-3,
-        n_mels=40,
-        db=False,
-        normalize=False,
-        spikify=False,
-        spiking_thresh=0.9,
-    ):
+        sample_rate: float = 48e3,
+        fft_window: float = 25e-3,
+        hop_length_s: float = 10e-3,
+        n_mels: int = 40,
+        db: bool = False,
+        normalize: bool = False,
+        spikify: bool = False,
+        spiking_thresh: float = 0.9,
+    ) -> None:
+        """Initialize mel filterbank transform.
 
+        Args:
+            sample_rate: Audio sample rate in Hz.
+            fft_window: FFT window size in seconds.
+            hop_length_s: Hop length between windows in seconds.
+            n_mels: Number of mel filterbank channels.
+            db: Whether to convert to dB scale.
+            normalize: Whether to normalize the spectrogram.
+            spikify: Whether to convert to spike trains.
+            spiking_thresh: Threshold for spike conversion.
+        """
         self.sample_rate = sample_rate
         self.n_fft = int(fft_window * sample_rate)
         self.hop_length = int(hop_length_s * sample_rate)
@@ -189,8 +256,15 @@ class MelFilterbank:
             n_mels=self.n_mels,
         )
 
-    def __call__(self, waveform):
+    def __call__(self, waveform: torch.Tensor) -> torch.Tensor:
+        """Apply mel filterbank transform.
 
+        Args:
+            waveform: Input audio waveform tensor.
+
+        Returns:
+            Mel spectrogram tensor.
+        """
         # Apply the Mel Spectrogram transform
         mel_spec = self.mel_spectrogram(waveform)
 
