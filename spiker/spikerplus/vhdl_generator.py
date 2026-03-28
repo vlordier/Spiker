@@ -1,9 +1,10 @@
 from math import log2
-import torch
+
 import numpy as np
+import torch
 
 from .vhdl.layer import Layer
-from .vhdl.network import Network, FullAccelerator
+from .vhdl.network import FullAccelerator, Network
 
 
 class VhdlGenerator:
@@ -12,7 +13,7 @@ class VhdlGenerator:
         self.net = net
         self.optim_config = optim_config
 
-        self.input_size = self.input_size(list(self.net.layers)[0])
+        self.input_size = self.input_size(next(iter(self.net.layers)))
         self.output_size = self.output_size(list(self.net.layers)[-2])
 
     def generate(self, functional=True, interface=False, debug=False):
@@ -30,8 +31,7 @@ class VhdlGenerator:
         if not interface:
             return vhdl_net
 
-        else:
-            return FullAccelerator(vhdl_net, self.input_size, self.output_size)
+        return FullAccelerator(vhdl_net, self.input_size, self.output_size)
 
     def input_size(self, layer):
 
@@ -80,13 +80,17 @@ class VhdlGenerator:
         if "weight" in dir(self.net.layers[layer]):
             return self.net.layers[layer].weight.data.cpu().numpy()
 
-        elif "recurrent" in dir(self.net.layers[layer]):
+        if "recurrent" in dir(self.net.layers[layer]):
             return self.net.layers[layer].recurrent.weight.data.cpu().numpy()
+
+        return None
 
     def extract_threshold(self, layer):
 
         if "threshold" in dir(self.net.layers[layer]):
             return np.array([self.net.layers[layer].threshold.data.item()])
+
+        return None
 
     def extract_reset(self, layer):
 
@@ -96,14 +100,15 @@ class VhdlGenerator:
             if reset == "subtract":
                 return "subtractive"
 
-            elif reset == "zero":
+            if reset == "zero":
                 return "fixed"
 
-            elif reset == "none":
+            if reset == "none":
                 return "none"
 
-            else:
-                raise ValueError("Reset type not supported")
+            raise ValueError("Reset type not supported")
+
+        return None
 
     def extract_alpha(self, layer: str) -> int:
 
@@ -117,8 +122,7 @@ class VhdlGenerator:
                 raise ValueError("Alpha decay must be between 0 and 1")
 
             return self.pow2_shift(1 - alpha)
-        else:
-            raise ValueError("Layer does not have alpha attribute")
+        raise ValueError("Layer does not have alpha attribute")
 
     def extract_beta(self, layer: str) -> int:
 
@@ -132,10 +136,9 @@ class VhdlGenerator:
                 raise ValueError("Beta decay must be between 0 and 1")
 
             return self.pow2_shift(1 - beta)
-        else:
-            raise ValueError("Layer does not have beta attribute")
+        raise ValueError("Layer does not have beta attribute")
 
     def pow2_shift(self, value: float) -> int:
         if value <= 0:
             raise ValueError("Value must be positive for log2 calculation")
-        return int(round(log2(value)))
+        return round(log2(value))

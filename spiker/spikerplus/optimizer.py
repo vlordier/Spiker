@@ -1,284 +1,261 @@
-import logging
 import json
+import logging
+
+import numpy as np
 import torch
 from tabulate import tabulate
-import numpy as np
 
 from .net_builder import SNN, NetBuilder
 from .trainer import Trainer
 
+
 class Quantizer:
+    def fixed_point(self, value, fp_dec, bitwidth):
 
-	def fixed_point(self, value, fp_dec, bitwidth):
+        quant = value * 2**fp_dec
 
-		quant = value * 2**fp_dec
+        return self.saturated_int(quant, bitwidth)
 
-		return self.saturated_int(quant, bitwidth)
+    def saturated_int(self, value, bitwidth):
+        return self.saturate(self.to_int(value), bitwidth)
 
-	def saturated_int(self, value, bitwidth):
-		return self.saturate(self.to_int(value), bitwidth)
+    def saturate(self, value, bitwidth):
 
-	def saturate(self, value, bitwidth):
+        if (
+            type(value).__module__ == np.__name__
+            or type(value).__module__ == torch.__name__
+        ):
+            value[value > 2 ** (bitwidth - 1) - 1] = 2 ** (bitwidth - 1) - 1
+            value[value < -(2 ** (bitwidth - 1))] = -(2 ** (bitwidth - 1))
 
-		if type(value).__module__ == np.__name__ or \
-		type(value).__module__ == torch.__name__:
+            return value.float()
 
-			value[value > 2**(bitwidth-1)-1] = \
-				2**(bitwidth-1)-1
-			value[value < -2**(bitwidth-1)] = \
-				-2**(bitwidth-1)
+        if value > 2 ** (bitwidth - 1) - 1:
+            value = 2 ** (bitwidth - 1) - 1
 
-			return value.float()
+        elif value < -(2 ** (bitwidth - 1)):
+            value = -(2 ** (bitwidth - 1))
 
-		else:
+        return float(value)
 
-			if value > 2**(bitwidth-1)-1:
-				value = 2**(bitwidth-1)-1
+    def to_int(self, value):
 
-			elif value < -2**(bitwidth-1):
-				value = -2**(bitwidth-1)
+        if type(value).__module__ == np.__name__:
+            quant = value.astype(int).astype(float)
 
-			return float(value)
+        elif type(value).__module__ == torch.__name__:
+            quant = value.type(torch.int64).float()
 
-	def to_int(self, value):
+        else:
+            quant = float(int(value))
 
-		if type(value).__module__ == np.__name__:
-			quant = value.astype(int).astype(float)
-
-		elif type(value).__module__ == torch.__name__:
-			quant = value.type(torch.int64).float()
-
-		else:
-			quant = float(int(value))
-
-		return quant
-
+        return quant
 
 
 class QuantSNN(SNN):
+    def __init__(self, net_dict, neurons_bw):
 
-	def __init__(self, net_dict, neurons_bw):
+        super().__init__(net_dict)
 
-		super().__init__(net_dict)
+        self.neurons_bw = neurons_bw
 
-		self.neurons_bw = neurons_bw
+        self.quantizer = Quantizer()
 
-		self.quantizer = Quantizer()
+    def forward(self, input_spikes):
 
+        self.reset()
 
-	def forward(self, input_spikes):
+        cur = {}
 
-		self.reset()
+        if input_spikes.shape[0] != self.n_cycles:
+            logging.warning(
+                "Input data have a time dimension different from "
+                "the network's number of steps. It's ok at this level, "
+                "but remember to use a suitable number of steps in the "
+                "vhdl generator"
+            )
 
-		cur = {}
+        for step in range(input_spikes.shape[0]):
+            first = True
+            prev_layer = None
 
-		if input_spikes.shape[0] != self.n_cycles:
-			logging.warning("Input data have a time dimension different from "\
-					"the network's number of steps. It's ok at this level, "\
-					"but remember to use a suitable number of steps in the "\
-					"vhdl generator")
+            for layer in self.layers:
+                idx = str(self.extract_index(layer))
 
-		for step in range(input_spikes.shape[0]):
+                if "fc" in layer:
+                    if first:
+                        cur[layer] = self.layers[layer](input_spikes[step])
+                        first = False
 
-			first = True
+                    else:
+                        cur[layer] = self.layers[layer](self.spk[prev_layer])
 
-			for layer in self.layers:
+                elif layer == "if" + idx or layer == "lif" + idx:
+                    self.spk[layer], self.mem[layer] = self.layers[layer](
+                        cur[prev_layer], self.mem[layer]
+                    )
 
-				idx = str(self.extract_index(layer))
-				
-				if "fc" in layer:
+                elif layer == "syn" + idx:
+                    self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
+                        layer
+                    ](cur[prev_layer], self.syn[layer], self.mem[layer])
 
-					if first:
-						cur[layer] = self.layers[layer](input_spikes[step])
-						first = False
+                elif layer == "rif" + idx or layer == "rlif" + idx:
+                    self.spk[layer], self.mem[layer] = self.layers[layer](
+                        cur[prev_layer], self.spk[layer], self.mem[layer]
+                    )
 
-					else:
-						cur[layer] = self.layers[layer](self.spk[prev_layer])
+                elif layer == "rsyn" + idx:
+                    self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
+                        layer
+                    ](
+                        cur[prev_layer],
+                        self.spk[layer],
+                        self.syn[layer],
+                        self.mem[layer],
+                    )
 
-				elif layer == "if" + idx:
-					self.spk[layer], self.mem[layer] = self.layers[layer]\
-							(cur[prev_layer], self.mem[layer])
+                prev_layer = layer
 
-				elif layer == "lif" + idx:
-					self.spk[layer], self.mem[layer] = self.layers[layer]\
-							(cur[prev_layer], self.mem[layer])
+                self.quantize(layer)
 
-				elif layer == "syn" + idx:
-					self.spk[layer], self.syn[layer], self.mem[layer] = \
-							self.layers[layer](cur[prev_layer], self.syn[layer],
-							self.mem[layer])
+                self.record(layer)
 
-				elif layer == "rif" + idx:
-					self.spk[layer], self.mem[layer] = self.layers[layer]\
-							(cur[prev_layer], self.spk[layer], self.mem[layer])
+        self.stack_rec()
 
-				elif layer == "rlif" + idx:
-					self.spk[layer], self.mem[layer] = self.layers[layer]\
-							(cur[prev_layer], self.spk[layer], self.mem[layer])
+    def quantize(self, layer):
 
-				elif layer == "rsyn" + idx:
-					self.spk[layer], self.syn[layer], self.mem[layer] = \
-							self.layers[layer](cur[prev_layer], self.spk[layer], 
-							self.syn[layer], self.mem[layer])
+        if "fc" not in layer:
+            self.mem[layer] = self.quantizer.saturated_int(
+                self.mem[layer], self.neurons_bw
+            )
 
-				prev_layer = layer
-
-				self.quantize(layer)
-
-				self.record(layer)
-
-		self.stack_rec()
-
-	def quantize(self, layer):
-
-		if not "fc" in layer:
-			self.mem[layer] = self.quantizer.saturated_int(
-					self.mem[layer], self.neurons_bw)
-
-			if "syn" in layer:
-				self.syn[layer] = self.quantizer.saturated_int(
-					self.syn[layer], self.neurons_bw)
-
+            if "syn" in layer:
+                self.syn[layer] = self.quantizer.saturated_int(
+                    self.syn[layer], self.neurons_bw
+                )
 
 
 class Optimizer(Trainer, NetBuilder):
+    def __init__(self, net, net_dict, optim_config, readout_type="mem"):
 
-	def __init__(self, net, net_dict, optim_config, readout_type = "mem"):
+        Trainer.__init__(self, net, readout_type)
+        NetBuilder.__init__(self, net_dict)
 
-		Trainer.__init__(self, net, readout_type)
-		NetBuilder.__init__(self, net_dict)
+        self.default_config = {
+            "weights_bw": {"min": 4, "max": 8},
+            "neurons_bw": {"min": 4, "max": 10},
+            "fp_dec": {"min": 2, "max": 3},
+        }
 
-		self.default_config = {
+        self.allowed_keys = self.default_config.keys()
 
-			"weights_bw"	: {
-				"min"	: 4,
-				"max"	: 8
-			},
+        self.quantizer = Quantizer()
 
-			"neurons_bw"	: {
-				"min"	: 4,
-				"max"	: 10
-			},
+        self.state_dict = net.state_dict()
+        self.net_dict = self.parse_config(net_dict)
 
-			"fp_dec"	: {
-				"min"	: 2,
-				"max"	: 3
-			}
-		}
+        self.optim_config = self.parse_opt_config(optim_config)
 
-		self.allowed_keys = self.default_config.keys()
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
 
-		self.quantizer = Quantizer()
+        else:
+            self.device = torch.device("cpu")
 
-		self.state_dict = net.state_dict()
-		self.net_dict = self.parse_config(net_dict)
+    def parse_opt_config(self, optim_config):
 
-		self.optim_config = self.parse_opt_config(optim_config)
+        optim_dict = {}
 
-		if torch.cuda.is_available():
-			self.device = torch.device("cuda")
+        for key in optim_config:
+            if key in self.allowed_keys:
+                if "min" in optim_config[key]:
+                    if not isinstance(optim_config[key]["min"], int):
+                        msg = "Range specifiers must be integers"
+                        raise ValueError(msg)
 
-		else:
-			self.device = torch.device("cpu")
-		
+                    min_value = optim_config[key]["min"]
 
-	def parse_opt_config(self, optim_config):
+                else:
+                    min_value = self.default_config[key]["min"]
 
-		optim_dict = {}
+                if "max" in optim_config[key]:
+                    if not isinstance(optim_config[key]["max"], int):
+                        msg = "Range specifiers must be integers"
+                        raise ValueError(msg)
 
-		for key in optim_config:
+                    max_value = optim_config[key]["max"]
 
-			if key in self.allowed_keys:
+                else:
+                    max_value = self.default_config[key]["max"]
 
-				if "min" in optim_config[key]:
+                optim_dict[key] = [i for i in range(min_value, max_value + 1)]
 
-					if not isinstance(optim_config[key]["min"], int):
-						raise ValueError("Range specifiers must be integers\n")
+        log_message = "Optimizer configured: \n"
+        log_message += json.dumps(optim_dict, indent=4)
+        logging.info(log_message)
 
-					else:
-						min_value = optim_config[key]["min"]
+        return optim_dict
 
-				else:
-					min_value = self.default_config[key]["min"]
+    def optimize(self, dataloader):
 
-				if "max" in optim_config[key]:
+        headers = [
+            "Fixed-point decimals",
+            "Neurons' bitwidth",
+            "Weights bitwidth",
+            "Loss",
+            "Accuracy",
+        ]
+        table = []
 
-					if not isinstance(optim_config[key]["max"], int):
-						raise ValueError("Range specifiers must be integers\n")
+        for fp_dec in self.optim_config["fp_dec"]:
+            for w_bw in self.optim_config["weights_bw"]:
+                for neuron_bw in self.optim_config["neurons_bw"]:
+                    self.build_quant_snn(w_bw, neuron_bw, fp_dec)
 
-					else:
-						max_value = optim_config[key]["max"]
+                    loss, acc = self.evaluate(dataloader)
 
-				else:
-					max_value = self.default_config[key]["max"]
+                    log_message = "\nLoss: " + f"{loss:.2f}" + "\n"
+                    log_message += "Acc: " + f"{acc * 100:.2f}" + "%\n"
+                    logging.info(log_message)
 
+                    table.append(
+                        [
+                            str(fp_dec),
+                            str(neuron_bw),
+                            str(w_bw),
+                            str(loss),
+                            f"{acc * 100:.2f}" + "%",
+                        ]
+                    )
 
-				optim_dict[key] = [i for i in range(min_value, max_value + 1)]
+        table = "\n" + tabulate(table, headers=headers, tablefmt="grid")
 
+        logging.info(table)
 
-		log_message = "Optimizer configured: \n"
-		log_message += json.dumps(optim_dict, indent = 4)
-		logging.info(log_message)
+    def build_quant_snn(self, weights_bw, neurons_bw, fp_dec):
 
-		return optim_dict
+        self.net = QuantSNN(self.net_dict, neurons_bw)
 
-	def optimize(self, dataloader):
+        quant_state_dict = self.state_dict.copy()
 
-		headers = ["Fixed-point decimals", "Neurons' bitwidth", 
-					"Weights bitwidth", "Loss", "Accuracy"]
-		table = []
+        for key in quant_state_dict:
+            if "weight" in key:
+                quant_state_dict[key] = self.quantizer.fixed_point(
+                    quant_state_dict[key], fp_dec, weights_bw
+                )
 
-		for fp_dec in self.optim_config["fp_dec"]:
+            elif "threshold" in key:
+                quant_state_dict[key] = self.quantizer.fixed_point(
+                    quant_state_dict[key], fp_dec, neurons_bw
+                )
 
-			for w_bw in self.optim_config["weights_bw"]:
+        self.net.load_state_dict(quant_state_dict)
 
-				for neuron_bw in self.optim_config["neurons_bw"]:
+        self.net.to(self.device)
 
-					self.build_quant_snn(w_bw, neuron_bw, fp_dec)
-
-					loss, acc = self.evaluate(dataloader)
-
-					log_message = "\nLoss: " + "{:.2f}".format(loss) + "\n"
-					log_message += "Acc: " + "{:.2f}".format(acc*100) + "%\n"
-					logging.info(log_message)
-
-					table.append([
-						str(fp_dec),
-						str(neuron_bw),
-						str(w_bw),
-						str(loss),
-						"{:.2f}".format(acc*100) + "%"
-					])
-
-		table = "\n" + tabulate(table, headers = headers, tablefmt = "grid")
-
-		logging.info(table)
-
-
-	def build_quant_snn(self, weights_bw, neurons_bw, fp_dec):
-
-		self.net = QuantSNN(self.net_dict, neurons_bw)
-
-		quant_state_dict = self.state_dict.copy()
-
-		for key in quant_state_dict.keys():
-
-			if "weight" in key:
-
-				quant_state_dict[key] = self.quantizer.fixed_point(
-						quant_state_dict[key], fp_dec, weights_bw)
-
-			elif "threshold" in key:
-
-				quant_state_dict[key] = self.quantizer.fixed_point(
-						quant_state_dict[key], fp_dec, neurons_bw)
-
-		self.net.load_state_dict(quant_state_dict)
-
-		self.net.to(self.device)
-
-		log_message = "Network ready:\n"
-		log_message += "Fixed-point decimals: " + str(fp_dec) + "\n"
-		log_message += "Neurons bitwidth: " + str(neurons_bw) + "\n"
-		log_message += "Weights bitwidth: " + str(weights_bw) + "\n"
-		logging.info(log_message)
+        log_message = "Network ready:\n"
+        log_message += "Fixed-point decimals: " + str(fp_dec) + "\n"
+        log_message += "Neurons bitwidth: " + str(neurons_bw) + "\n"
+        log_message += "Weights bitwidth: " + str(weights_bw) + "\n"
+        logging.info(log_message)

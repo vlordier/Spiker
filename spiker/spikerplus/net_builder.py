@@ -1,14 +1,261 @@
-import re
 import json
 import logging
+import re
+from typing import Any
+
+import snntorch as snn
+import torch
 import torch.nn as nn
-from typing import Dict, List, Any
+
+from .exceptions import LayerConfigError, NeuronModelError
 
 
 class SNN(nn.Module):
-    def __init__(self, net_dict: Dict[str, Any]):
+    def __init__(self, net_dict: dict[str, Any]):
 
-        self.default_dict: Dict[str, Any] = {
+        super().__init__()
+
+        self.n_cycles: int = net_dict["n_cycles"]
+
+        self.layers: nn.ModuleDict = nn.ModuleDict()
+
+        self.syn: dict[str, torch.Tensor] = {}
+        self.mem: dict[str, torch.Tensor] = {}
+        self.spk: dict[str, torch.Tensor] = {}
+
+        self.syn_rec: dict[str, list[torch.Tensor]] = {}
+        self.mem_rec: dict[str, list[torch.Tensor]] = {}
+        self.spk_rec: dict[str, list[torch.Tensor]] = {}
+
+        self.build_snn(net_dict)
+
+    def build_snn(self, net_dict: dict[str, Any]) -> None:
+
+        first: bool = True
+
+        for key in net_dict:
+            if "layer" in key:
+                idx: str = str(self.extract_index(key) + 1)
+
+                if first:
+                    self.layers["fc" + idx] = nn.Linear(
+                        in_features=net_dict["n_inputs"],
+                        out_features=net_dict[key]["n_neurons"],
+                        bias=False,
+                    )
+
+                    n_inputs_next: int = net_dict[key]["n_neurons"]
+
+                    first = False
+
+                else:
+                    self.layers["fc" + idx] = nn.Linear(
+                        in_features=n_inputs_next,
+                        out_features=net_dict[key]["n_neurons"],
+                        bias=False,
+                    )
+
+                    n_inputs_next = net_dict[key]["n_neurons"]
+
+                if net_dict[key]["neuron_model"] == "if":
+                    name = "if" + idx
+
+                    self.layers[name] = snn.Leaky(
+                        beta=0.0,
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                elif net_dict[key]["neuron_model"] == "lif":
+                    name = "lif" + idx
+
+                    self.layers[name] = snn.Leaky(
+                        beta=net_dict[key]["beta"],
+                        learn_beta=net_dict[key]["learn_beta"],
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                elif net_dict[key]["neuron_model"] == "syn":
+                    name = "syn" + idx
+
+                    self.layers[name] = snn.Synaptic(
+                        alpha=net_dict[key]["alpha"],
+                        learn_alpha=net_dict[key]["learn_alpha"],
+                        beta=net_dict[key]["beta"],
+                        learn_beta=net_dict[key]["learn_beta"],
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                elif net_dict[key]["neuron_model"] == "rif":
+                    name = "rif" + idx
+
+                    self.layers[name] = snn.RLeaky(
+                        linear_features=net_dict[key]["n_neurons"],
+                        beta=0.0,
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                elif net_dict[key]["neuron_model"] == "rlif":
+                    name = "rlif" + idx
+
+                    self.layers[name] = snn.RLeaky(
+                        linear_features=net_dict[key]["n_neurons"],
+                        beta=net_dict[key]["beta"],
+                        learn_beta=net_dict[key]["learn_beta"],
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                elif net_dict[key]["neuron_model"] == "rsyn":
+                    name = "rsyn" + idx
+
+                    self.layers[name] = snn.RSynaptic(
+                        linear_features=net_dict[key]["n_neurons"],
+                        alpha=net_dict[key]["alpha"],
+                        learn_alpha=net_dict[key]["learn_alpha"],
+                        beta=net_dict[key]["beta"],
+                        learn_beta=net_dict[key]["learn_beta"],
+                        threshold=net_dict[key]["threshold"],
+                        learn_threshold=net_dict[key]["learn_threshold"],
+                        reset_mechanism=net_dict[key]["reset_mechanism"],
+                    )
+
+                else:
+                    supported = "if, lif, syn, rif, rlif, rsyn"
+                    msg = f"Invalid neuron model. Choose from: {supported}"
+                    raise NeuronModelError(msg)
+
+    def reset(self) -> None:
+
+        for layer in self.layers:
+            idx = str(self.extract_index(layer))
+
+            if "fc" not in layer:
+                self.mem_rec[layer] = []
+                self.syn_rec[layer] = []
+                self.spk_rec[layer] = []
+
+                if layer == "if" + idx or layer == "lif" + idx:
+                    self.mem[layer] = self.layers[layer].reset_mem()
+
+                elif layer == "syn" + idx:
+                    self.syn[layer], self.mem[layer] = self.layers[layer].reset_mem()
+
+                elif layer == "rif" + idx or layer == "rlif" + idx:
+                    self.spk[layer], self.mem[layer] = self.layers[layer].reset_mem()
+
+                elif layer == "rsyn" + idx:
+                    self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
+                        layer
+                    ].reset_mem()
+
+    def record(self, layer: str) -> None:
+
+        if "fc" not in layer:
+            self.mem_rec[layer].append(self.mem[layer])
+            self.spk_rec[layer].append(self.spk[layer])
+
+            if "syn" in layer:
+                self.syn_rec[layer].append(self.syn[layer])
+
+    def stack_rec(self):
+
+        for layer in self.layers:
+            if "fc" not in layer:
+                self.mem_rec[layer] = torch.stack(self.mem_rec[layer], dim=0)
+                self.spk_rec[layer] = torch.stack(self.spk_rec[layer], dim=0)
+
+                if "syn" in layer:
+                    self.syn_rec[layer] = torch.stack(self.syn_rec[layer], dim=0)
+
+    def extract_index(self, layer_name):
+
+        index = re.findall(r"\d+", layer_name)
+
+        if len(index) != 1:
+            error_msg = "Invalid layer name: " + str(layer_name)
+            error_msg += '. Use "layer_" + <integer layer index>\n'
+
+            raise ValueError(error_msg)
+        return int(index[0])
+
+    def forward(self, input_spikes: torch.Tensor) -> None:
+
+        self.reset()
+
+        cur: dict[str, torch.Tensor] = {}
+
+        if input_spikes.shape[0] != self.n_cycles:
+            logging.warning(
+                "Input data have a time dimension different from "
+                "the network's number of steps. It's ok at this level, "
+                "but remember to use a suitable number of steps in the "
+                "vhdl generator"
+            )
+
+        for step in range(input_spikes.shape[0]):
+            first: bool = True
+            prev_layer: str | None = None
+
+            for layer in self.layers:
+                idx: str = str(self.extract_index(layer))
+
+                if "fc" in layer:
+                    if first:
+                        cur[layer] = self.layers[layer](input_spikes[step])
+                        first = False
+                        prev_layer = layer
+
+                    else:
+                        cur[layer] = self.layers[layer](self.spk[prev_layer])
+                        prev_layer = layer
+
+                elif layer == "if" + idx or layer == "lif" + idx:
+                    self.spk[layer], self.mem[layer] = self.layers[layer](
+                        cur[prev_layer], self.mem[layer]
+                    )
+                    prev_layer = layer
+
+                elif layer == "syn" + idx:
+                    self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
+                        layer
+                    ](cur[prev_layer], self.syn[layer], self.mem[layer])
+                    prev_layer = layer
+
+                elif layer == "rif" + idx or layer == "rlif" + idx:
+                    self.spk[layer], self.mem[layer] = self.layers[layer](
+                        cur[prev_layer], self.spk[layer], self.mem[layer]
+                    )
+                    prev_layer = layer
+
+                elif layer == "rsyn" + idx:
+                    self.spk[layer], self.syn[layer], self.mem[layer] = self.layers[
+                        layer
+                    ](
+                        cur[prev_layer],
+                        self.spk[layer],
+                        self.syn[layer],
+                        self.mem[layer],
+                    )
+                    prev_layer = layer
+
+                self.record(layer)
+
+        self.stack_rec()
+
+
+class NetBuilder:
+    def __init__(self, net_dict: dict[str, Any]):
+
+        self.default_dict: dict[str, Any] = {
             "n_cycles": 73,
             "n_inputs": 40,
             "layer_0": {
@@ -35,10 +282,10 @@ class SNN(nn.Module):
             },
         }
 
-        self.net_allowed_keys: List[str] = self.select_keys()
-        self.supported_models: List[str] = ["if", "lif", "syn", "rif", "rlif", "rsyn"]
+        self.net_allowed_keys: list[str] = self.select_keys()
+        self.supported_models: list[str] = ["if", "lif", "syn", "rif", "rlif", "rsyn"]
 
-        self.has_alpha: Dict[str, bool] = {
+        self.has_alpha: dict[str, bool] = {
             "if": False,
             "lif": False,
             "syn": True,
@@ -47,7 +294,7 @@ class SNN(nn.Module):
             "rsyn": True,
         }
 
-        self.has_beta: Dict[str, bool] = {
+        self.has_beta: dict[str, bool] = {
             "if": False,
             "lif": True,
             "syn": True,
@@ -56,9 +303,9 @@ class SNN(nn.Module):
             "rsyn": True,
         }
 
-        self.supported_resets: List[str] = ["zero", "subtract", "none"]
+        self.supported_resets: list[str] = ["zero", "subtract", "none"]
 
-        self.net_dict: Dict[str, Any] = self.parse_config(net_dict)
+        self.net_dict: dict[str, Any] = self.parse_config(net_dict)
 
     def build(self):
 
@@ -69,11 +316,11 @@ class SNN(nn.Module):
 
         return snn
 
-    def select_keys(self) -> List[str]:
+    def select_keys(self) -> list[str]:
 
         keywords = self.default_dict.keys()
 
-        allowed_keys: List[str] = []
+        allowed_keys: list[str] = []
 
         for k in keywords:
             k = re.sub(r"\d+", "", k)
@@ -83,155 +330,169 @@ class SNN(nn.Module):
 
         return allowed_keys
 
-    def parse_config(self, net_dict: Dict[str, Any]) -> Dict[str, Any]:
-
-        parsed_dict: Dict[str, Any] = {}
-
+    def _parse_global_config(
+        self, net_dict: dict[str, Any], parsed_dict: dict[str, Any]
+    ) -> None:
+        """Parse global network configuration parameters."""
         for key in net_dict:
-            if any([allowed in key for allowed in self.net_allowed_keys]):
-                if "layer" not in key:
-                    if type(net_dict[key]) is not int:
-                        raise ValueError(
-                            "Error, " + key + " must be an integer value\n"
-                        )
+            if (
+                any(allowed in key for allowed in self.net_allowed_keys)
+                and "layer" not in key
+            ):
+                if type(net_dict[key]) is not int:
+                    msg = f"{key} must be an integer value"
+                    raise LayerConfigError(msg)
 
-                    parsed_dict[key] = net_dict[key]
+                parsed_dict[key] = net_dict[key]
 
-                else:
-                    parsed_dict[key] = {}
-                    layer: Dict[str, Any] = net_dict[key]
+    def _parse_layer_config(
+        self, net_dict: dict[str, Any], parsed_dict: dict[str, Any]
+    ) -> None:
+        """Parse layer configuration parameters."""
+        for key in net_dict:
+            if (
+                any(allowed in key for allowed in self.net_allowed_keys)
+                and "layer" in key
+            ):
+                parsed_dict[key] = {}
+                layer: dict[str, Any] = net_dict[key]
 
-                    if "n_neurons" in layer.keys():
-                        if not isinstance(layer["n_neurons"], int):
-                            raise ValueError("Number of neurons must be integer.\n")
+                self._parse_layer_neurons(layer, parsed_dict[key])
+                self._parse_layer_model(layer, parsed_dict[key])
+                self._parse_layer_threshold(layer, parsed_dict[key])
+                self._parse_layer_reset(layer, parsed_dict[key])
+                self._parse_layer_alpha(layer, parsed_dict[key])
+                self._parse_layer_beta(layer, parsed_dict[key])
 
-                        else:
-                            parsed_dict[key]["n_neurons"] = layer["n_neurons"]
+    def _parse_layer_neurons(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse neuron count for a layer."""
+        if "n_neurons" in layer:
+            if not isinstance(layer["n_neurons"], int):
+                msg = "Number of neurons must be integer"
+                raise LayerConfigError(msg)
 
-                    else:
-                        parsed_dict[key]["n_neurons"] = self.default_dict["layer_0"][
-                            "n_neurons"
-                        ]
+            parsed_layer["n_neurons"] = layer["n_neurons"]
+        else:
+            parsed_layer["n_neurons"] = self.default_dict["layer_0"]["n_neurons"]
 
-                    if "neuron_model" in layer.keys():
-                        if layer["neuron_model"] not in self.supported_models:
-                            raise ValueError(
-                                "Unsupported neuron model. "
-                                "Choose one between "
-                                + str(self.supported_models)
-                                + "\n"
-                            )
+    def _parse_layer_model(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse neuron model for a layer."""
+        if "neuron_model" in layer:
+            if layer["neuron_model"] not in self.supported_models:
+                supported = self.supported_models
+                msg = f"Unsupported neuron model. Choose from: {supported}"
+                raise NeuronModelError(msg)
 
-                        else:
-                            parsed_dict[key]["neuron_model"] = layer["neuron_model"]
+            parsed_layer["neuron_model"] = layer["neuron_model"]
+        else:
+            parsed_layer["neuron_model"] = self.default_dict["layer_0"]["neuron_model"]
 
-                    else:
-                        parsed_dict[key]["neuron_model"] = self.default_dict["layer_0"][
-                            "neuron_model"
-                        ]
+    def _parse_layer_threshold(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse threshold configuration for a layer."""
+        if "threshold" in layer:
+            if not isinstance(layer["threshold"], (int, float)):
+                msg = "Threshold must be numeric"
+                raise LayerConfigError(msg)
 
-                    if "threshold" in layer.keys():
-                        if not isinstance(layer["threshold"], (int, float)):
-                            raise ValueError("Treshold must be numeric.\n")
+            parsed_layer["threshold"] = layer["threshold"]
+        else:
+            parsed_layer["threshold"] = self.default_dict["layer_0"]["threshold"]
 
-                        else:
-                            parsed_dict[key]["threshold"] = layer["threshold"]
+        if "learn_threshold" in layer:
+            if not isinstance(layer["learn_threshold"], bool):
+                msg = "learn_threshold must be boolean"
+                raise LayerConfigError(msg)
 
-                    else:
-                        parsed_dict[key]["threshold"] = self.default_dict["layer_0"][
-                            "threshold"
-                        ]
+            parsed_layer["learn_threshold"] = layer["learn_threshold"]
+        else:
+            parsed_layer["learn_threshold"] = self.default_dict["layer_0"][
+                "learn_threshold"
+            ]
 
-                    if "learn_threshold" in layer.keys():
-                        if not isinstance(layer["learn_threshold"], bool):
-                            raise ValueError("learn_threshold must be boolean.\n")
+    def _parse_layer_reset(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse reset mechanism for a layer."""
+        if "reset_mechanism" in layer:
+            if layer["reset_mechanism"] not in self.supported_resets:
+                supported = self.supported_resets
+                msg = f"Invalid reset mechanism. Choose from: {supported}"
+                raise LayerConfigError(msg)
 
-                        else:
-                            parsed_dict[key]["learn_threshold"] = layer[
-                                "learn_threshold"
-                            ]
+            parsed_layer["reset_mechanism"] = layer["reset_mechanism"]
+        else:
+            parsed_layer["reset_mechanism"] = self.default_dict["layer_0"][
+                "reset_mechanism"
+            ]
 
-                    else:
-                        parsed_dict[key]["learn_threshold"] = self.default_dict[
-                            "layer_0"
-                        ]["learn_threshold"]
+    def _parse_layer_alpha(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse alpha decay for a layer."""
+        if self.has_alpha[parsed_layer["neuron_model"]]:
+            if "alpha" in layer:
+                if not isinstance(layer["alpha"], float):
+                    msg = "Alpha decay must be float"
+                    raise LayerConfigError(msg)
 
-                    if "reset_mechanism" in layer.keys():
-                        if layer["reset_mechanism"] not in self.supported_resets:
-                            raise ValueError(
-                                "Invalid reset mechanism. "
-                                "Choose one between "
-                                + str(self.supported_resets)
-                                + "\n"
-                            )
+                if layer["alpha"] < 0.0 or layer["alpha"] > 1.0:
+                    msg = "Alpha decay must be between 0 and 1"
+                    raise LayerConfigError(msg)
 
-                        else:
-                            parsed_dict[key]["reset_mechanism"] = layer[
-                                "reset_mechanism"
-                            ]
+                parsed_layer["alpha"] = layer["alpha"]
+            else:
+                parsed_layer["alpha"] = self.default_dict["layer_0"]["alpha"]
 
-                    else:
-                        parsed_dict[key]["reset_mechanism"] = self.default_dict[
-                            "layer_0"
-                        ]["reset_mechanism"]
+            if "learn_alpha" in layer:
+                if not isinstance(layer["learn_alpha"], bool):
+                    msg = "learn_alpha must be boolean"
+                    raise LayerConfigError(msg)
 
-                    if self.has_alpha[parsed_dict[key]["neuron_model"]]:
-                        if "alpha" in layer.keys():
-                            if not isinstance(layer["alpha"], float):
-                                raise ValueError("Alpha decay must be float\n")
+                parsed_layer["learn_alpha"] = layer["learn_alpha"]
+            else:
+                parsed_layer["learn_alpha"] = self.default_dict["layer_0"][
+                    "learn_alpha"
+                ]
 
-                            elif layer["alpha"] < 0.0 or layer["alpha"] > 1.0:
-                                raise ValueError(
-                                    "Alpha decay must be between 0 and 1\n"
-                                )
+    def _parse_layer_beta(
+        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+    ) -> None:
+        """Parse beta decay for a layer."""
+        if self.has_beta[parsed_layer["neuron_model"]]:
+            if "beta" in layer:
+                if not isinstance(layer["beta"], float):
+                    msg = "Beta decay must be float"
+                    raise LayerConfigError(msg)
 
-                            else:
-                                parsed_dict[key]["alpha"] = layer["alpha"]
+                if layer["beta"] < 0.0 or layer["beta"] > 1.0:
+                    msg = "Beta decay must be between 0 and 1"
+                    raise LayerConfigError(msg)
 
-                        else:
-                            parsed_dict[key]["alpha"] = self.default_dict["layer_0"][
-                                "alpha"
-                            ]
+                parsed_layer["beta"] = layer["beta"]
+            else:
+                parsed_layer["beta"] = self.default_dict["layer_0"]["beta"]
 
-                        if "learn_alpha" in layer.keys():
-                            if not isinstance(layer["learn_alpha"], bool):
-                                raise ValueError("learn_alpha must be boolean.\n")
+            if "learn_beta" in layer:
+                if not isinstance(layer["learn_beta"], bool):
+                    msg = "learn_beta must be boolean"
+                    raise LayerConfigError(msg)
 
-                            else:
-                                parsed_dict[key]["learn_alpha"] = layer["learn_alpha"]
+                parsed_layer["learn_beta"] = layer["learn_beta"]
+            else:
+                parsed_layer["learn_beta"] = self.default_dict["layer_0"]["learn_beta"]
 
-                        else:
-                            parsed_dict[key]["learn_alpha"] = self.default_dict[
-                                "layer_0"
-                            ]["learn_alpha"]
+    def parse_config(self, net_dict: dict[str, Any]) -> dict[str, Any]:
 
-                    if self.has_beta[parsed_dict[key]["neuron_model"]]:
-                        if "beta" in layer.keys():
-                            if not isinstance(layer["beta"], float):
-                                raise ValueError("Beta decay must be float\n")
+        parsed_dict: dict[str, Any] = {}
 
-                            elif layer["beta"] < 0.0 or layer["beta"] > 1.0:
-                                raise ValueError("Beta decay must be between 0 and 1\n")
-
-                            else:
-                                parsed_dict[key]["beta"] = layer["beta"]
-
-                        else:
-                            parsed_dict[key]["beta"] = self.default_dict["layer_0"][
-                                "beta"
-                            ]
-
-                        if "learn_beta" in layer.keys():
-                            if not isinstance(layer["learn_beta"], bool):
-                                raise ValueError("learn_beta must be boolean.\n")
-
-                            else:
-                                parsed_dict[key]["learn_beta"] = layer["learn_beta"]
-
-                        else:
-                            parsed_dict[key]["learn_beta"] = self.default_dict[
-                                "layer_0"
-                            ]["learn_beta"]
+        self._parse_global_config(net_dict, parsed_dict)
+        self._parse_layer_config(net_dict, parsed_dict)
 
         if "n_cycles" not in parsed_dict:
             parsed_dict["n_cycles"] = self.default_dict["n_cycles"]
@@ -255,3 +516,13 @@ class SNN(nn.Module):
         logging.info(log_message)
 
         return parsed_dict
+
+
+if __name__ == "__main__":
+    from net_dict import net_dict
+
+    logging.basicConfig(level=logging.INFO)
+
+    net_builder = NetBuilder(net_dict)
+
+    snn = net_builder.build()

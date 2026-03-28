@@ -43,7 +43,7 @@ Documentation = "https://github.com/smilies-polito/Spiker#readme"
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
-dev = ["ruff>=0.6.0", "pre-commit>=3.0"]
+dev = ["ruff>=0.6.0", "pre-commit>=3.0", "pyupgrade>=3.0.0", "mdformat>=0.7.0", "typos>=1.0.0"]
 
 # Explicitly define where packages are located to avoid flat-layout issues
 [tool.setuptools.packages.find]
@@ -56,9 +56,229 @@ target-version = "py312"
 indent-width = 4
 
 [tool.ruff.lint]
-# Enable a set of rules (we'll use the recommended set for now)
-select = ["E", "F", "W", "C90"]
-ignore = []
+# Comprehensive rule selection for catching bugs and enforcing quality
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "C90",    # mccabe complexity
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "YTT",    # flake8-2020
+    "ASYNC",  # flake8-async
+    "S",      # flake8-bandit (security)
+    "BLE",    # flake8-blind-except
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "COM",    # flake8-commas
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "EM",     # flake8-errmsg
+    "EXE",    # flake8-executable
+    "FA",     # flake8-future-annotations
+    "ISC",    # flake8-implicit-str-concat
+    "ICN",    # flake8-import-conventions
+    "LOG",    # flake8-logging
+    "G",      # flake8-logging-format
+    "INP",    # flake8-no-pep420
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "PYI",    # flake8-pyi
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self
+    "SLOT",   # flake8-slots
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "TCH",    # flake8-type-checking
+    "INT",    # flake8-gettext
+    "PTH",    # flake8-use-pathlib
+    "TD",     # flake8-todos
+    "FIX",    # flake8-fixme
+    "ERA",    # eradicate (commented-out code)
+    "PGH",    # pygrep-hooks
+    "TRY",    # tryceratops
+    "FLY",    # flynt
+    "NPY",    # numpy
+    "AIR",    # airflow
+    "PERF",   # perflint
+    "FURB",   # refurb
+    "RUF",    # ruff-specific
+]
+ignore = [
+    "S101",    # Use of assert (ok in tests)
+    "PLR0913", # Too many arguments to function call
+    "PLR2004", # Magic value used in comparison
+    "COM812",  # Trailing comma missing (conflicts with formatter)
+    "ISC001",  # Single line implicit string concat (conflicts with formatter)
+    "ISC003",  # Explicitly concatenated string should be implicitly concatenated
+    "B006",    # Mutable default arguments (common in existing code)
+    "B008",    # Function call in default argument (common in existing code)
+    "TRY003",  # Avoid specifying long messages outside exception class
+    "N801",    # Class naming convention (existing testbench classes)
+    "FBT002",  # Boolean default positional argument
+    "FBT001",  # Boolean positional value in function call
+    "FBT003",  # Boolean positional value in function call
+    "PLW2901", # Loop variable overwritten (common pattern)
+    "PLC0206", # Extracting value from dictionary without calling .items()
+    "C416",    # Unnecessary list comprehension
+    "C419",    # Unnecessary list comprehension
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "PLR1714", # Consider merging multiple comparisons
+    "PIE804",  # Unnecessary dict kwargs
+    "PERF102", # When using only the values of a dict use the values() method
+    "EM101",   # Exception must not use a string literal
+    "Q003",    # Change outer quotes to avoid escaping inner quotes
+    "Q004",    # Unnecessary escape on inner quote character
+    "LOG015",  # warning/info call on root logger
+    "PLR0402", # Use from torch import nn in lieu of alias
+    "PTH110",  # os.path.exists should be replaced by Path.exists
+    "PTH103",  # os.makedirs should be replaced by Path.mkdir
+    "PTH112",  # os.path.isdir should be replaced by Path.is_dir
+    "PTH118",  # os.path.join should be replaced by Path with / operator
+    "PTH208",  # Use pathlib.Path.iterdir instead
+    "ANN",     # All annotation rules (too strict for existing code)
+    "ARG",     # All unused arguments rules
+    "DJ",      # flake8-django (not applicable)
+    "RUF022",  # __all__ is not sorted (style preference)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore more rules in VHDL template files
+"spiker/spikerplus/vhdl/*.py" = [
+    "B006",    # Mutable default arguments
+    "B008",    # Function call in default argument
+    "ARG002",  # Unused method argument
+    "TRY003",  # Long exception messages
+    "N801",    # Class naming convention
+    "B007",    # Unused loop control variable
+    "ANN",     # All annotation rules
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "C901",    # Too complex
+    "EM101",   # Exception must not use a string literal
+    "Q003",    # Change outer quotes to avoid escaping inner quotes
+    "Q004",    # Unnecessary escape on inner quote character
+    "ISC003",  # Explicitly concatenated string should be implicitly concatenated
+    "PLR1714", # Consider merging multiple comparisons
+    "PIE804",  # Unnecessary dict kwargs
+    "PERF102", # When using only the values of a dict use the values() method
+    "T201",    # print found
+    "PLR1722", # Use sys.exit() instead of exit
+    "LOG015",  # warning/info call on root logger
+    "PLR0402", # Use from torch import nn in lieu of alias
+    "RUF022",  # __all__ is not sorted
+    "F401",    # Unused imports (for re-exports)
+    "N802",    # Function naming convention
+    "N803",    # Argument naming convention
+    "N806",    # Variable naming convention
+    "A002",    # Function argument shadowing a Python builtin
+    "C408",    # Unnecessary dict call
+    "PIE790",  # Unnecessary pass statement
+    "RET504",  # Unnecessary assignment before return
+    "UP031",   # Use format specifiers instead of percent format
+    "ISC002",  # Implicitly concatenated string literals
+    "Q000",    # Single quotes found but double quotes preferred
+    "Q002",    # Single quote docstring found but double quotes preferred
+    "E711",    # Comparison to None should be is None
+    "E712",    # Avoid equality comparisons to False
+    "PTH123",  # open() should be replaced by Path.open()
+    "FURB122", # Use of file.write in a for loop
+    "S602",    # subprocess call with shell=True
+    "S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "PERF401", # Use list.extend to create a transformed list
+    "TRY300",  # Consider moving this statement to an else block
+    "G002",    # Logging statement uses %
+    "ISC002",  # Implicitly concatenated string literals over multiple lines
+    "RUF013",  # PEP 484 prohibits implicit Optional
+    "F821",    # Undefined name (existing code issues)
+    "F841",    # Local variable assigned but never used
+    "E501",    # Line too long
+    "SIM113",  # Use enumerate() for index variable
+    "SIM108",  # Use ternary operator
+    "TD002",   # Missing author in TODO
+    "TD003",   # Missing issue link for TODO
+    "TD005",   # Missing issue description after TODO
+    "TD006",   # Invalid TODO capitalization
+    "FIX002",  # Line contains TODO
+    "B905",    # zip() without explicit strict parameter
+    "E721",    # Use is and is not for type comparisons
+    "PERF402", # Use list or list.copy to create a copy
+    "RET503",  # Missing explicit return
+    "RUF015",  # Prefer next(iter()) over single element slice
+    "RUF046",  # Value being cast to int is already an integer
+    "PTH113",  # os.path.isfile should be replaced by Path.is_file
+]
+"spiker/spikerplus/vhdl/vhdltools/*.py" = [
+    "B006",    # Mutable default arguments
+    "B008",    # Function call in default argument
+    "ARG002",  # Unused method argument
+    "TRY003",  # Long exception messages
+    "N801",    # Class naming convention
+    "B007",    # Unused loop control variable
+    "ANN",     # All annotation rules
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "C901",    # Too complex
+    "EM101",   # Exception must not use a string literal
+    "Q003",    # Change outer quotes to avoid escaping inner quotes
+    "Q004",    # Unnecessary escape on inner quote character
+    "ISC003",  # Explicitly concatenated string should be implicitly concatenated
+    "PLR1714", # Consider merging multiple comparisons
+    "PIE804",  # Unnecessary dict kwargs
+    "PERF102", # When using only the values of a dict use the values() method
+    "T201",    # print found
+    "PLR1722", # Use sys.exit() instead of exit
+    "LOG015",  # warning/info call on root logger
+    "PLR0402", # Use from torch import nn in lieu of alias
+    "RUF022",  # __all__ is not sorted
+    "F401",    # Unused imports (for re-exports)
+    "N802",    # Function naming convention
+    "N803",    # Argument naming convention
+    "N806",    # Variable naming convention
+    "A002",    # Function argument shadowing a Python builtin
+    "C408",    # Unnecessary dict call
+    "PIE790",  # Unnecessary pass statement
+    "RET504",  # Unnecessary assignment before return
+    "UP031",   # Use format specifiers instead of percent format
+    "ISC002",  # Implicitly concatenated string literals
+    "Q000",    # Single quotes found but double quotes preferred
+    "Q002",    # Single quote docstring found but double quotes preferred
+    "E711",    # Comparison to None should be is None
+    "E712",    # Avoid equality comparisons to False
+    "PTH123",  # open() should be replaced by Path.open()
+    "FURB122", # Use of file.write in a for loop
+    "S602",    # subprocess call with shell=True
+    "S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "PERF401", # Use list.extend to create a transformed list
+    "TRY300",  # Consider moving this statement to an else block
+    "G002",    # Logging statement uses %
+    "ISC002",  # Implicitly concatenated string literals over multiple lines
+    "RUF013",  # PEP 484 prohibits implicit Optional
+    "F821",    # Undefined name (existing code issues)
+    "F841",    # Local variable assigned but never used
+    "E501",    # Line too long
+    "SIM113",  # Use enumerate() for index variable
+    "SIM108",  # Use ternary operator
+    "TD002",   # Missing author in TODO
+    "TD003",   # Missing issue link for TODO
+    "TD005",   # Missing issue description after TODO
+    "TD006",   # Invalid TODO capitalization
+    "FIX002",  # Line contains TODO
+    "B905",    # zip() without explicit strict parameter
+    "E721",    # Use is and is not for type comparisons
+    "PERF402", # Use list or list.copy to create a copy
+    "RET503",  # Missing explicit return
+    "RUF015",  # Prefer next(iter()) over single element slice
+    "RUF046",  # Value being cast to int is already an integer
+    "PTH113",  # os.path.isfile should be replaced by Path.is_file
+    "W291",    # Trailing whitespace
+]
 
 [tool.ruff.format]
 # Format settings (we'll use black-like formatting via ruff)

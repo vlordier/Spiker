@@ -16,9 +16,6 @@
 # 2020 - Ricardo F Tafas Jr - https://github.com/rftafas
 # 2020 - T.P. Correa - https://github.com/tpcorrea
 
-import sys
-import os
-import copy
 from .custom_types import RecordTypeObj
 
 # TODO:

@@ -1,10 +1,10 @@
+import logging
 import os
 import time
-import logging
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as fn
-from typing import Optional, Tuple
 from torch.utils.data import DataLoader
 
 
@@ -13,8 +13,8 @@ class Trainer:
         self,
         net: nn.Module,
         readout_type: str = "mem",
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        loss_fn: Optional[nn.Module] = None,
+        optimizer: torch.optim.Optimizer | None = None,
+        loss_fn: nn.Module | None = None,
     ) -> None:
 
         self.supported_readouts = [
@@ -107,12 +107,13 @@ class Trainer:
         if store:
             self.store(output_dir)
 
-    def train_one_epoch(self, dataloader: DataLoader) -> Tuple[float, float]:
+    def train_one_epoch(self, dataloader: DataLoader) -> tuple[float, float]:
 
         accuracy = 0
+        batch_count = 0
 
         # Iterate over the dataloader
-        for batch_idx, (data, labels) in enumerate(dataloader):
+        for _batch_idx, (data, labels) in enumerate(dataloader):
             data = data.permute(1, 0, 2).to(self.device)
             labels = labels.to(self.device)
 
@@ -132,21 +133,23 @@ class Trainer:
             self.optimizer.step()
 
             accuracy += self.compute_accuracy(labels)
+            batch_count += 1
 
-        accuracy /= batch_idx
+        accuracy /= batch_count
 
-        return loss_val.item(), accuracy.item()
+        return loss_val.item(), accuracy
 
-    def evaluate(self, dataloader: DataLoader) -> Tuple[float, float]:
+    def evaluate(self, dataloader: DataLoader) -> tuple[float, float]:
 
         # Test set
         with torch.no_grad():
             self.net.eval()
 
             accuracy = 0
+            batch_count = 0
 
             # Iterate over the dataloader
-            for batch_idx, (data, labels) in enumerate(dataloader):
+            for _batch_idx, (data, labels) in enumerate(dataloader):
                 data = data.permute(1, 0, 2).to(self.device)
                 labels = labels.to(self.device)
 
@@ -158,10 +161,11 @@ class Trainer:
                 loss_val = self.loss_fn(out_rec, targets)
 
                 accuracy += self.compute_accuracy(labels)
+                batch_count += 1
 
-            accuracy /= batch_idx
+            accuracy /= batch_count
 
-        return loss_val.item(), accuracy.item()
+        return loss_val.item(), accuracy
 
     def readout(self, labels):
 
@@ -203,11 +207,11 @@ class Trainer:
 
         if start_time:
             elapsed = time.time() - start_time
-            elapsed = "{:.2f}".format(elapsed) + "s"
+            elapsed = f"{elapsed:.2f}" + "s"
             log_message += "Elapsed time " + elapsed + "\n"
 
-        train_loss = "{:.2f}".format(train_loss)
-        val_loss = "{:.2f}".format(val_loss)
+        train_loss = f"{train_loss:.2f}"
+        val_loss = f"{val_loss:.2f}"
         log_message += "Train loss: " + train_loss + "\n"
         log_message += "Validation loss: " + val_loss + "\n"
 
@@ -232,19 +236,18 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    from torch.utils.data import DataLoader, random_split
-
-    from net_dict import net_dict
-    from net_builder import NetBuilder
-
     import sys
+
+    from net_builder import NetBuilder
+    from net_dict import net_dict
+    from torch.utils.data import DataLoader, random_split
 
     audio_mnist_dir = "../../SnnModels/SnnTorch/AudioMnist/"
 
     if audio_mnist_dir not in sys.path:
         sys.path.append(audio_mnist_dir)
 
-    from audio_mnist import MelFilterbank, CustomDataset
+    from audio_mnist import CustomDataset, MelFilterbank
 
     logging.basicConfig(level=logging.INFO)
 
