@@ -13,6 +13,7 @@ import numpy.typing as npt
 import torch
 from tabulate import tabulate
 
+from .device import get_device
 from .net_builder import SNN, NetBuilder
 from .trainer import Trainer
 from .types import ReadoutType
@@ -262,11 +263,7 @@ class Optimizer(Trainer, NetBuilder):
 
         self.optim_config = self.parse_opt_config(optim_config)
 
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
-
-        else:
-            self.device = torch.device("cpu")
+        self.device = get_device(prefer_gpu=True)
 
     def parse_opt_config(
         self, optim_config: dict[str, Any]

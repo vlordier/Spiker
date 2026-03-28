@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as fn
 from torch.utils.data import DataLoader
 
+from .device import get_device
 from .types import ReadoutType
 
 
@@ -68,11 +69,7 @@ class Trainer:
         else:
             self.loss_fn = loss_fn
 
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
-
-        else:
-            self.device = torch.device("cpu")
+        self.device = get_device(prefer_gpu=True)
 
         self.net.to(self.device)
 

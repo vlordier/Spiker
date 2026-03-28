@@ -139,10 +139,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="mem")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         out_rec, targets = trainer.readout(labels)
 
         assert out_rec.shape[0] == 2 * 10  # batch_size * time_steps
@@ -154,10 +154,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="mem_max")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         out_rec, targets = trainer.readout(labels)
 
         assert out_rec.shape[0] == 2  # batch_size
@@ -168,10 +168,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="mem_avg")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         out_rec, targets = trainer.readout(labels)
 
         assert out_rec.shape[0] == 2  # batch_size
@@ -182,10 +182,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="spk")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         out_rec, targets = trainer.readout(labels)
 
         assert out_rec.shape[0] == 2 * 10  # batch_size * time_steps
@@ -196,10 +196,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="spk_count")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         out_rec, targets = trainer.readout(labels)
 
         assert out_rec.shape[0] == 2  # batch_size
@@ -210,10 +210,10 @@ class TestTrainer:
         snn = self._create_simple_network()
         trainer = Trainer(snn, readout_type="mem")
 
-        input_spikes = torch.randn(10, 2, 5)
+        input_spikes = torch.randn(10, 2, 5).to(trainer.device)
         snn(input_spikes)
 
-        labels = torch.randint(0, 3, (2,))
+        labels = torch.randint(0, 3, (2,)).to(trainer.device)
         accuracy = trainer.compute_accuracy(labels)
 
         assert isinstance(accuracy, float)
