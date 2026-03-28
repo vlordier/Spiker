@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import torch
+import torch.nn as nn
 from tabulate import tabulate
 
 from .device import get_device
@@ -222,7 +223,7 @@ class QuantSNN(SNN):
                 )
 
 
-class Optimizer(Trainer, NetBuilder):
+class Optimizer:
     """Quantization-aware optimizer for spiking neural networks.
 
     Provides grid search over quantization parameters to find
@@ -245,8 +246,8 @@ class Optimizer(Trainer, NetBuilder):
             readout_type: Type of readout to use.
 
         """
-        Trainer.__init__(self, net, readout_type)
-        NetBuilder.__init__(self, net_dict)
+        self._trainer = Trainer(net, readout_type)
+        self._net_builder = NetBuilder(net_dict)
 
         self.default_config: dict[str, dict[str, int]] = {
             "weights_bw": {"min": 4, "max": 8},
@@ -259,11 +260,58 @@ class Optimizer(Trainer, NetBuilder):
         self.quantizer = Quantizer()
 
         self.state_dict = net.state_dict()
-        self.net_dict = self.parse_config(net_dict)
+        self._parsed_net_dict = self._net_builder.parse_config(net_dict)
 
         self.optim_config = self.parse_opt_config(optim_config)
 
         self.device = get_device(prefer_gpu=True)
+
+    @property
+    def net(self) -> SNN:
+        """Get the network."""
+        return self._trainer.net
+
+    @net.setter
+    def net(self, value: SNN) -> None:
+        """Set the network."""
+        self._trainer.net = value
+
+    @property
+    def optimizer(self) -> torch.optim.Optimizer:
+        """Get the optimizer."""
+        return self._trainer.optimizer
+
+    @property
+    def loss_fn(self) -> nn.Module:
+        """Get the loss function."""
+        return self._trainer.loss_fn
+
+    @property
+    def net_dict(self) -> dict[str, Any]:
+        """Get the parsed network configuration."""
+        return self._parsed_net_dict
+
+    def parse_config(self, net_dict: dict[str, Any]) -> dict[str, Any]:
+        """Parse network configuration.
+
+        Args:
+            net_dict: Raw network configuration dictionary.
+
+        Returns:
+            Parsed network configuration dictionary.
+        """
+        return self._net_builder.parse_config(net_dict)
+
+    def evaluate(self, dataloader: torch.utils.data.DataLoader) -> tuple[float, float]:
+        """Evaluate the network.
+
+        Args:
+            dataloader: DataLoader for evaluation data.
+
+        Returns:
+            Tuple of (loss, accuracy).
+        """
+        return self._trainer.evaluate(dataloader)
 
     def parse_opt_config(
         self, optim_config: dict[str, Any]

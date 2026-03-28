@@ -47,7 +47,7 @@ class SNN(nn.Module):
 
         self.build_snn(net_dict)
 
-    def build_snn(self, net_dict: dict[str, Any]) -> None:
+    def build_snn(self, net_dict: dict[str, Any]) -> None:  # noqa: C901
         """Build the spiking neural network layers.
 
         Args:
@@ -59,102 +59,100 @@ class SNN(nn.Module):
         for key in net_dict:
             if "layer" in key:
                 idx: str = str(self.extract_index(key) + 1)
+                layer_config = net_dict[key]
+                neuron_model_str = layer_config["neuron_model"]
+
+                try:
+                    neuron_model = NeuronModel(neuron_model_str)
+                except ValueError:
+                    supported = ", ".join(m.value for m in NeuronModel)
+                    msg = (
+                        f"Invalid neuron model '{neuron_model_str}'. "
+                        f"Choose from: {supported}"
+                    )
+                    raise NeuronModelError(msg) from None
 
                 if first:
                     self.layers["fc" + idx] = nn.Linear(
                         in_features=net_dict["n_inputs"],
-                        out_features=net_dict[key]["n_neurons"],
+                        out_features=layer_config["n_neurons"],
                         bias=False,
                     )
 
-                    n_inputs_next: int = net_dict[key]["n_neurons"]
+                    n_inputs_next: int = layer_config["n_neurons"]
 
                     first = False
 
                 else:
                     self.layers["fc" + idx] = nn.Linear(
                         in_features=n_inputs_next,
-                        out_features=net_dict[key]["n_neurons"],
+                        out_features=layer_config["n_neurons"],
                         bias=False,
                     )
 
-                    n_inputs_next = net_dict[key]["n_neurons"]
+                    n_inputs_next = layer_config["n_neurons"]
 
-                if net_dict[key]["neuron_model"] == "if":
-                    name = "if" + idx
+                name = neuron_model.value + idx
 
-                    self.layers[name] = snn.Leaky(
-                        beta=0.0,
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
+                match neuron_model:
+                    case NeuronModel.IF:
+                        self.layers[name] = snn.Leaky(
+                            beta=0.0,
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
-                elif net_dict[key]["neuron_model"] == "lif":
-                    name = "lif" + idx
+                    case NeuronModel.LIF:
+                        self.layers[name] = snn.Leaky(
+                            beta=layer_config["beta"],
+                            learn_beta=layer_config["learn_beta"],
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
-                    self.layers[name] = snn.Leaky(
-                        beta=net_dict[key]["beta"],
-                        learn_beta=net_dict[key]["learn_beta"],
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
+                    case NeuronModel.SYN:
+                        self.layers[name] = snn.Synaptic(
+                            alpha=layer_config["alpha"],
+                            learn_alpha=layer_config["learn_alpha"],
+                            beta=layer_config["beta"],
+                            learn_beta=layer_config["learn_beta"],
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
-                elif net_dict[key]["neuron_model"] == "syn":
-                    name = "syn" + idx
+                    case NeuronModel.RIF:
+                        self.layers[name] = snn.RLeaky(
+                            linear_features=layer_config["n_neurons"],
+                            beta=0.0,
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
-                    self.layers[name] = snn.Synaptic(
-                        alpha=net_dict[key]["alpha"],
-                        learn_alpha=net_dict[key]["learn_alpha"],
-                        beta=net_dict[key]["beta"],
-                        learn_beta=net_dict[key]["learn_beta"],
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
+                    case NeuronModel.RLIF:
+                        self.layers[name] = snn.RLeaky(
+                            linear_features=layer_config["n_neurons"],
+                            beta=layer_config["beta"],
+                            learn_beta=layer_config["learn_beta"],
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
-                elif net_dict[key]["neuron_model"] == "rif":
-                    name = "rif" + idx
-
-                    self.layers[name] = snn.RLeaky(
-                        linear_features=net_dict[key]["n_neurons"],
-                        beta=0.0,
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
-
-                elif net_dict[key]["neuron_model"] == "rlif":
-                    name = "rlif" + idx
-
-                    self.layers[name] = snn.RLeaky(
-                        linear_features=net_dict[key]["n_neurons"],
-                        beta=net_dict[key]["beta"],
-                        learn_beta=net_dict[key]["learn_beta"],
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
-
-                elif net_dict[key]["neuron_model"] == "rsyn":
-                    name = "rsyn" + idx
-
-                    self.layers[name] = snn.RSynaptic(
-                        linear_features=net_dict[key]["n_neurons"],
-                        alpha=net_dict[key]["alpha"],
-                        learn_alpha=net_dict[key]["learn_alpha"],
-                        beta=net_dict[key]["beta"],
-                        learn_beta=net_dict[key]["learn_beta"],
-                        threshold=net_dict[key]["threshold"],
-                        learn_threshold=net_dict[key]["learn_threshold"],
-                        reset_mechanism=net_dict[key]["reset_mechanism"],
-                    )
-
-                else:
-                    supported = "if, lif, syn, rif, rlif, rsyn"
-                    msg = f"Invalid neuron model. Choose from: {supported}"
-                    raise NeuronModelError(msg)
+                    case NeuronModel.RSYN:
+                        self.layers[name] = snn.RSynaptic(
+                            linear_features=layer_config["n_neurons"],
+                            alpha=layer_config["alpha"],
+                            learn_alpha=layer_config["learn_alpha"],
+                            beta=layer_config["beta"],
+                            learn_beta=layer_config["learn_beta"],
+                            threshold=layer_config["threshold"],
+                            learn_threshold=layer_config["learn_threshold"],
+                            reset_mechanism=layer_config["reset_mechanism"],
+                        )
 
     def reset(self) -> None:
         """Reset all neuron states and recordings."""

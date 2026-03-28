@@ -137,11 +137,13 @@ class VhdlGenerator:
         Returns:
             Weight array or None if not available.
         """
-        if "weight" in dir(self.net.layers[layer]):
-            return self.net.layers[layer].weight.data.cpu().numpy()
+        layer_obj = self.net.layers[layer]
 
-        if "recurrent" in dir(self.net.layers[layer]):
-            return self.net.layers[layer].recurrent.weight.data.cpu().numpy()
+        if hasattr(layer_obj, "weight"):
+            return layer_obj.weight.data.cpu().numpy()
+
+        if hasattr(layer_obj, "recurrent"):
+            return layer_obj.recurrent.weight.data.cpu().numpy()
 
         return None
 
@@ -154,8 +156,10 @@ class VhdlGenerator:
         Returns:
             Threshold array or None if not available.
         """
-        if "threshold" in dir(self.net.layers[layer]):
-            return np.array([self.net.layers[layer].threshold.data.item()])
+        layer_obj = self.net.layers[layer]
+
+        if hasattr(layer_obj, "threshold"):
+            return np.array([layer_obj.threshold.data.item()])
 
         return None
 
@@ -168,8 +172,10 @@ class VhdlGenerator:
         Returns:
             Reset mechanism string or None if not available.
         """
-        if "reset_mechanism" in dir(self.net.layers[layer]):
-            reset = self.net.layers[layer].reset_mechanism
+        layer_obj = self.net.layers[layer]
+
+        if hasattr(layer_obj, "reset_mechanism"):
+            reset = layer_obj.reset_mechanism
 
             if reset == "subtract":
                 return "subtractive"
@@ -180,7 +186,8 @@ class VhdlGenerator:
             if reset == "none":
                 return "none"
 
-            raise ValueError("Reset type not supported")
+            msg = f"Reset type not supported: {reset}"
+            raise ValueError(msg)
 
         return None
 

@@ -45,12 +45,14 @@ class Trainer:
         self.net = net
 
         if isinstance(readout_type, ReadoutType):
+            self.readout_type_enum = readout_type
             self.readout_type = readout_type.value
         else:
             if readout_type not in self.supported_readouts:
                 msg = f"Invalid readout type. Choose from: {self.supported_readouts}"
                 raise ValueError(msg)
 
+            self.readout_type_enum = ReadoutType(readout_type)
             self.readout_type = readout_type
 
         if optimizer is None:
@@ -213,22 +215,26 @@ class Trainer:
             Tuple of (output recordings, repeated labels).
 
         """
-        if "mem" in self.readout_type:
+        if self.readout_type_enum == ReadoutType.MEM or self.readout_type_enum in (
+            ReadoutType.MEM_MAX,
+            ReadoutType.MEM_AVG,
+            ReadoutType.MEM_SOFTMAX,
+        ):
             _, out_rec = list(self.net.mem_rec.items())[-1]
 
-            if self.readout_type == "mem_max":
+            if self.readout_type_enum == ReadoutType.MEM_MAX:
                 out_rec, _ = torch.max(out_rec, dim=0, keepdim=True)
 
-            elif self.readout_type == "mem_avg":
+            elif self.readout_type_enum == ReadoutType.MEM_AVG:
                 out_rec = torch.mean(out_rec, dim=0, keepdim=True)
 
-            elif self.readout_type == "mem_softmax":
+            elif self.readout_type_enum == ReadoutType.MEM_SOFTMAX:
                 out_rec = fn.softmax(out_rec, dim=-1)
 
         else:
             _, out_rec = list(self.net.spk_rec.items())[-1]
 
-            if self.readout_type == "spk_count":
+            if self.readout_type_enum == ReadoutType.SPK_COUNT:
                 out_rec = torch.sum(out_rec, dim=0, keepdim=True)
 
         return out_rec.reshape(-1, out_rec.shape[-1]), labels.repeat(out_rec.shape[0])
@@ -243,7 +249,11 @@ class Trainer:
             Accuracy as a float between 0 and 1.
 
         """
-        if "mem" in self.readout_type:
+        if self.readout_type_enum == ReadoutType.MEM or self.readout_type_enum in (
+            ReadoutType.MEM_MAX,
+            ReadoutType.MEM_AVG,
+            ReadoutType.MEM_SOFTMAX,
+        ):
             _, out_rec = list(self.net.mem_rec.items())[-1]
             _, idx = torch.mean(out_rec, dim=0).max(dim=1)
         else:
