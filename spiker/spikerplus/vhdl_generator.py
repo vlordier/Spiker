@@ -1,3 +1,9 @@
+"""VHDL generator for spiking neural networks.
+
+This module provides functionality to generate VHDL code for
+hardware implementation of spiking neural networks.
+"""
+
 from math import log2
 from typing import Any
 
@@ -11,7 +17,19 @@ from .vhdl.network import FullAccelerator, Network
 
 
 class VhdlGenerator:
+    """VHDL code generator for spiking neural networks.
+
+    Generates synthesizable VHDL code for hardware deployment
+    of trained spiking neural networks.
+    """
+
     def __init__(self, net: nn.Module, optim_config: dict[str, Any]) -> None:
+        """Initialize VHDL generator.
+
+        Args:
+            net: Trained neural network.
+            optim_config: Optimization configuration dictionary.
+        """
 
         self.net = net
         self.optim_config = optim_config
