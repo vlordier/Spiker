@@ -37,6 +37,7 @@ class AudioMnistDL:
             spiking_thresh: Threshold for converting to spike trains.
             transform: Transform to apply to waveforms, or "default" for mel filterbank.
             train_size: Proportion of data to use for training (0-1).
+
         """
         # Input data sample rate
         self.sample_rate: float = 48e3  # Hz
@@ -102,6 +103,7 @@ class AudioMnistDL:
 
         Returns:
             Tuple of (train_loader, test_loader).
+
         """
         if not num_workers:
             num_workers = self.num_cpu_cores
@@ -144,6 +146,7 @@ class CustomDataset(Dataset):
             root_dir: Directory containing subdirectories, one for each user.
             transform: Optional transform to apply to waveforms.
             max_length: Maximum waveform length (samples will be padded/truncated).
+
         """
         self.root_dir = root_dir
         self.transform = transform
@@ -176,6 +179,7 @@ class CustomDataset(Dataset):
 
         Returns:
             Tuple of (waveform, label).
+
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -232,6 +236,7 @@ class MelFilterbank:
             normalize: Whether to normalize the spectrogram.
             spikify: Whether to convert to spike trains.
             spiking_thresh: Threshold for spike conversion.
+
         """
         self.sample_rate = sample_rate
         self.n_fft = int(fft_window * sample_rate)
@@ -264,6 +269,7 @@ class MelFilterbank:
 
         Returns:
             Mel spectrogram tensor.
+
         """
         # Apply the Mel Spectrogram transform
         mel_spec = self.mel_spectrogram(waveform)

@@ -40,6 +40,7 @@ class Quantizer:
 
         Returns:
             Quantized value.
+
         """
         quant = value * 2**fp_dec
 
@@ -56,13 +57,23 @@ class Quantizer:
 
         Returns:
             Converted value.
+
         """
         return self.saturate(self.to_int(value), bitwidth)
 
     def saturate(
         self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
+        """Saturate values to fit within bit-width limits.
 
+        Args:
+            value: Value to saturate.
+            bitwidth: Total bit-width for quantization.
+
+        Returns:
+            Saturated value.
+
+        """
         if (
             type(value).__module__ == np.__name__
             or type(value).__module__ == torch.__name__
@@ -83,7 +94,15 @@ class Quantizer:
     def to_int(
         self, value: npt.NDArray[np.float64] | torch.Tensor | float
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
+        """Convert value to integer representation.
 
+        Args:
+            value: Value to convert.
+
+        Returns:
+            Integer representation of the value.
+
+        """
         if type(value).__module__ == np.__name__:
             quant = value.astype(int).astype(float)
 
@@ -109,8 +128,8 @@ class QuantSNN(SNN):
         Args:
             net_dict: Network configuration dictionary.
             neurons_bw: Bit-width for neuron state quantization.
-        """
 
+        """
         super().__init__(net_dict)
 
         self.neurons_bw = neurons_bw
@@ -118,7 +137,12 @@ class QuantSNN(SNN):
         self.quantizer = Quantizer()
 
     def forward(self, input_spikes: torch.Tensor) -> None:
+        """Forward pass with quantization.
 
+        Args:
+            input_spikes: Input spike tensor of shape (n_cycles, n_inputs).
+
+        """
         self.reset()
 
         cur: dict[str, torch.Tensor] = {}
@@ -180,7 +204,12 @@ class QuantSNN(SNN):
         self.stack_rec()
 
     def quantize(self, layer: str) -> None:
+        """Quantize neuron states for a layer.
 
+        Args:
+            layer: Name of the layer to quantize.
+
+        """
         if "fc" not in layer:
             self.mem[layer] = self.quantizer.saturated_int(
                 self.mem[layer], self.neurons_bw
@@ -213,8 +242,8 @@ class Optimizer(Trainer, NetBuilder):
             net_dict: Network configuration dictionary.
             optim_config: Optimizer configuration dictionary.
             readout_type: Type of readout to use.
-        """
 
+        """
         Trainer.__init__(self, net, readout_type)
         NetBuilder.__init__(self, net_dict)
 
@@ -242,7 +271,15 @@ class Optimizer(Trainer, NetBuilder):
     def parse_opt_config(
         self, optim_config: dict[str, Any]
     ) -> dict[str, dict[str, int]]:
+        """Parse optimization configuration.
 
+        Args:
+            optim_config: Optimizer configuration dictionary.
+
+        Returns:
+            Parsed optimization configuration.
+
+        """
         optim_dict: dict[str, dict[str, int]] = {}
 
         for key in optim_config:
@@ -276,7 +313,12 @@ class Optimizer(Trainer, NetBuilder):
         return optim_dict
 
     def optimize(self, dataloader: torch.utils.data.DataLoader) -> None:
+        """Run quantization-aware optimization.
 
+        Args:
+            dataloader: DataLoader for evaluation data.
+
+        """
         headers = [
             "Fixed-point decimals",
             "Neurons' bitwidth",
@@ -312,7 +354,14 @@ class Optimizer(Trainer, NetBuilder):
         logging.info(table_str)
 
     def build_quant_snn(self, weights_bw: int, neurons_bw: int, fp_dec: int) -> None:
+        """Build quantized SNN with specified parameters.
 
+        Args:
+            weights_bw: Bit-width for weight quantization.
+            neurons_bw: Bit-width for neuron state quantization.
+            fp_dec: Number of fractional bits for fixed-point representation.
+
+        """
         self.net = QuantSNN(self.net_dict, neurons_bw)
 
         quant_state_dict = self.state_dict.copy()

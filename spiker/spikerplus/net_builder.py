@@ -29,6 +29,7 @@ class SNN(nn.Module):
 
         Args:
             net_dict: Network configuration dictionary.
+
         """
         super().__init__()
 
@@ -47,7 +48,12 @@ class SNN(nn.Module):
         self.build_snn(net_dict)
 
     def build_snn(self, net_dict: dict[str, Any]) -> None:
+        """Build the spiking neural network layers.
 
+        Args:
+            net_dict: Network configuration dictionary.
+
+        """
         first: bool = True
 
         for key in net_dict:
@@ -151,7 +157,7 @@ class SNN(nn.Module):
                     raise NeuronModelError(msg)
 
     def reset(self) -> None:
-
+        """Reset all neuron states and recordings."""
         for layer in self.layers:
             idx = str(self.extract_index(layer))
 
@@ -175,7 +181,12 @@ class SNN(nn.Module):
                     ].reset_mem()
 
     def record(self, layer: str) -> None:
+        """Record neuron states for a layer.
 
+        Args:
+            layer: Name of the layer to record.
+
+        """
         if "fc" not in layer:
             self.mem_rec[layer].append(self.mem[layer])
             self.spk_rec[layer].append(self.spk[layer])
@@ -183,8 +194,8 @@ class SNN(nn.Module):
             if "syn" in layer:
                 self.syn_rec[layer].append(self.syn[layer])
 
-    def stack_rec(self):
-
+    def stack_rec(self) -> None:
+        """Stack recordings into tensors."""
         for layer in self.layers:
             if "fc" not in layer:
                 self.mem_rec[layer] = torch.stack(self.mem_rec[layer], dim=0)
@@ -193,8 +204,19 @@ class SNN(nn.Module):
                 if "syn" in layer:
                     self.syn_rec[layer] = torch.stack(self.syn_rec[layer], dim=0)
 
-    def extract_index(self, layer_name):
+    def extract_index(self, layer_name: str) -> int:
+        """Extract numeric index from layer name.
 
+        Args:
+            layer_name: Name of the layer (e.g., 'layer_0', 'fc1').
+
+        Returns:
+            Numeric index extracted from the layer name.
+
+        Raises:
+            ValueError: If the layer name does not contain exactly one integer.
+
+        """
         index = re.findall(r"\d+", layer_name)
 
         if len(index) != 1:
@@ -205,7 +227,12 @@ class SNN(nn.Module):
         return int(index[0])
 
     def forward(self, input_spikes: torch.Tensor) -> None:
+        """Forward pass through the network.
 
+        Args:
+            input_spikes: Input spike tensor of shape (n_cycles, n_inputs).
+
+        """
         self.reset()
 
         cur: dict[str, torch.Tensor] = {}
@@ -281,8 +308,8 @@ class NetBuilder:
 
         Args:
             net_dict: Network configuration dictionary.
-        """
 
+        """
         self.default_dict: dict[str, Any] = {
             "n_cycles": 73,
             "n_inputs": 40,
@@ -337,8 +364,13 @@ class NetBuilder:
 
         self.net_dict: dict[str, Any] = self.parse_config(net_dict)
 
-    def build(self):
+    def build(self) -> SNN:
+        """Build and return the spiking neural network.
 
+        Returns:
+            Built SNN instance.
+
+        """
         snn = SNN(self.net_dict)
 
         log_message = "Network ready: " + str(snn) + "\n"
@@ -347,7 +379,12 @@ class NetBuilder:
         return snn
 
     def select_keys(self) -> list[str]:
+        """Extract allowed configuration keys from default dictionary.
 
+        Returns:
+            List of allowed configuration keys.
+
+        """
         keywords = self.default_dict.keys()
 
         allowed_keys: list[str] = []
@@ -518,7 +555,15 @@ class NetBuilder:
                 parsed_layer["learn_beta"] = self.default_dict["layer_0"]["learn_beta"]
 
     def parse_config(self, net_dict: dict[str, Any]) -> dict[str, Any]:
+        """Parse and validate network configuration.
 
+        Args:
+            net_dict: Raw network configuration dictionary.
+
+        Returns:
+            Validated and parsed network configuration dictionary.
+
+        """
         parsed_dict: dict[str, Any] = {}
 
         self._parse_global_config(net_dict, parsed_dict)

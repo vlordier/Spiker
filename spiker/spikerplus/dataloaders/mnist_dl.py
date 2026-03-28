@@ -38,6 +38,7 @@ class MnistDL:
             image_height: Height to resize images to.
             num_steps: Number of time steps for spike encoding.
             gain: Gain factor for spike rate encoding.
+
         """
         self.spike_transform = SpikeTransform(num_steps=num_steps, gain=gain)
 
@@ -85,6 +86,7 @@ class MnistDL:
 
         Returns:
             Tuple of (train_loader, test_loader).
+
         """
         if not num_workers:
             num_workers = self.num_cpu_cores
@@ -120,6 +122,7 @@ class SpikeTransform:
         Args:
             num_steps: Number of time steps for spike encoding.
             gain: Gain factor for spike rate.
+
         """
         self.num_steps = num_steps
         self.gain = gain
@@ -132,6 +135,7 @@ class SpikeTransform:
 
         Returns:
             Spike-encoded tensor.
+
         """
         img = img.reshape(img.shape[1] * img.shape[2])
 

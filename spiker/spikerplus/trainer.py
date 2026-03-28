@@ -37,8 +37,8 @@ class Trainer:
             readout_type: Type of readout to use (spk, mem, etc.).
             optimizer: Optimizer for training, or None for default Adam.
             loss_fn: Loss function, or None for CrossEntropyLoss.
-        """
 
+        """
         self.supported_readouts = [readout.value for readout in ReadoutType]
 
         self.net = net
@@ -92,7 +92,16 @@ class Trainer:
         store: bool = False,
         output_dir: str = "Trained",
     ) -> None:
+        """Train the network for a specified number of epochs.
 
+        Args:
+            train_loader: DataLoader for training data.
+            val_loader: DataLoader for validation data.
+            n_epochs: Number of training epochs.
+            store: Whether to save the trained model.
+            output_dir: Directory to save the model if store is True.
+
+        """
         train_loss = torch.zeros(n_epochs)
         val_loss = torch.zeros(n_epochs)
 
@@ -122,7 +131,15 @@ class Trainer:
             self.store(output_dir)
 
     def train_one_epoch(self, dataloader: DataLoader) -> tuple[float, float]:
+        """Train for one epoch.
 
+        Args:
+            dataloader: DataLoader for training data.
+
+        Returns:
+            Tuple of (average loss, accuracy).
+
+        """
         accuracy = 0
         batch_count = 0
 
@@ -154,7 +171,15 @@ class Trainer:
         return loss_val.item(), accuracy
 
     def evaluate(self, dataloader: DataLoader) -> tuple[float, float]:
+        """Evaluate the network on validation/test data.
 
+        Args:
+            dataloader: DataLoader for evaluation data.
+
+        Returns:
+            Tuple of (average loss, accuracy).
+
+        """
         # Test set
         with torch.no_grad():
             self.net.eval()
@@ -181,8 +206,16 @@ class Trainer:
 
         return loss_val.item(), accuracy
 
-    def readout(self, labels):
+    def readout(self, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Extract network output for loss computation.
 
+        Args:
+            labels: Ground truth labels.
+
+        Returns:
+            Tuple of (output recordings, repeated labels).
+
+        """
         if "mem" in self.readout_type:
             _, out_rec = list(self.net.mem_rec.items())[-1]
 
@@ -204,6 +237,15 @@ class Trainer:
         return out_rec.reshape(-1, out_rec.shape[-1]), labels.repeat(out_rec.shape[0])
 
     def compute_accuracy(self, labels: torch.Tensor) -> float:
+        """Compute accuracy for a batch.
+
+        Args:
+            labels: Ground truth labels.
+
+        Returns:
+            Accuracy as a float between 0 and 1.
+
+        """
         if "mem" in self.readout_type:
             _, out_rec = list(self.net.mem_rec.items())[-1]
             _, idx = torch.mean(out_rec, dim=0).max(dim=1)
@@ -212,8 +254,26 @@ class Trainer:
             _, idx = torch.sum(out_rec, dim=0).max(dim=1)
         return torch.mean((labels == idx).float().detach().cpu()).item()
 
-    def log(self, epoch, train_loss, val_loss, train_acc, val_acc, start_time=None):
+    def log(
+        self,
+        epoch: int,
+        train_loss: torch.Tensor,
+        val_loss: torch.Tensor,
+        train_acc: torch.Tensor,
+        val_acc: torch.Tensor,
+        start_time: float | None = None,
+    ) -> None:
+        """Log training progress.
 
+        Args:
+            epoch: Current epoch number.
+            train_loss: Training loss.
+            val_loss: Validation loss.
+            train_acc: Training accuracy.
+            val_acc: Validation accuracy.
+            start_time: Start time of training (for elapsed time calculation).
+
+        """
         log_message = ""
 
         epoch = str(epoch)
@@ -236,8 +296,14 @@ class Trainer:
 
         logging.info(log_message)
 
-    def store(self, out_dir, out_file=None):
+    def store(self, out_dir: str, out_file: str | None = None) -> None:
+        """Save the trained model state dictionary.
 
+        Args:
+            out_dir: Directory to save the model.
+            out_file: Filename for the saved model.
+
+        """
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 

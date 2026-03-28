@@ -8,7 +8,7 @@ from .exceptions import LayerConfigError, NeuronModelError
 from .types import NeuronModel, ResetMechanism
 
 
-def validate_type(value: Any, expected_type: type, param_name: str) -> None:
+def validate_type(value: object, expected_type: type, param_name: str) -> None:
     """Validate that a value is of the expected type.
 
     Args:
@@ -18,6 +18,7 @@ def validate_type(value: Any, expected_type: type, param_name: str) -> None:
 
     Raises:
         LayerConfigError: If the value is not of the expected type.
+
     """
     if not isinstance(value, expected_type):
         if isinstance(expected_type, tuple):
@@ -41,13 +42,16 @@ def validate_range(
 
     Raises:
         LayerConfigError: If the value is outside the specified range.
+
     """
     if value < min_val or value > max_val:
         msg = f"{param_name} must be between {min_val} and {max_val}"
         raise LayerConfigError(msg)
 
 
-def validate_choice(value: Any, valid_choices: list[Any], param_name: str) -> None:
+def validate_choice(
+    value: object, valid_choices: list[object], param_name: str
+) -> None:
     """Validate that a value is one of the valid choices.
 
     Args:
@@ -57,6 +61,7 @@ def validate_choice(value: Any, valid_choices: list[Any], param_name: str) -> No
 
     Raises:
         NeuronModelError: If the value is not in the valid choices.
+
     """
     if value not in valid_choices:
         msg = f"{param_name} must be one of {valid_choices}"
@@ -68,10 +73,10 @@ def validate_config_param(
     expected_type: type | None = None,
     min_val: float | None = None,
     max_val: float | None = None,
-    valid_choices: list[Any] | None = None,
+    valid_choices: list[object] | None = None,
     required: bool = True,
 ) -> Callable:
-    """Decorator to validate configuration parameters.
+    """Validate configuration parameters with the decorated function.
 
     Args:
         param_name: The name of the parameter to validate.
@@ -83,11 +88,12 @@ def validate_config_param(
 
     Returns:
         A decorator function.
+
     """
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: tuple[object, ...], **kwargs: dict[str, object]) -> object:
             value = _extract_parameter_value(func, param_name, args, kwargs)
 
             _validate_required(value, required, param_name)
@@ -107,8 +113,8 @@ def validate_config_param(
 
 
 def _extract_parameter_value(
-    func: Callable, param_name: str, args: tuple, kwargs: dict
-) -> Any:
+    func: Callable, param_name: str, args: tuple[object, ...], kwargs: dict[str, object]
+) -> object | None:
     """Extract parameter value from function arguments."""
     value = kwargs.get(param_name)
     if value is None and len(args) > 0:
@@ -123,7 +129,7 @@ def _extract_parameter_value(
     return value
 
 
-def _validate_required(value: Any, required: bool, param_name: str) -> None:
+def _validate_required(value: object | None, required: bool, param_name: str) -> None:
     """Validate that required parameter is present."""
     if required and value is None:
         msg = f"{param_name} is required"
@@ -131,7 +137,7 @@ def _validate_required(value: Any, required: bool, param_name: str) -> None:
 
 
 def _validate_type_if_needed(
-    value: Any, expected_type: type | None, param_name: str
+    value: object, expected_type: type | None, param_name: str
 ) -> None:
     """Validate type if expected_type is specified."""
     if expected_type is not None:
@@ -147,7 +153,7 @@ def _validate_range_if_needed(
 
 
 def _validate_choices_if_needed(
-    value: Any, valid_choices: list[Any] | None, param_name: str
+    value: object, valid_choices: list[object] | None, param_name: str
 ) -> None:
     """Validate choices if valid_choices is specified."""
     if valid_choices is not None:
@@ -214,6 +220,7 @@ def validate_layer_config(layer_dict: dict[str, Any]) -> None:
 
     Raises:
         LayerConfigError: If the configuration is invalid.
+
     """
     _validate_neurons_param(layer_dict)
     _validate_model_param(layer_dict)
@@ -231,6 +238,7 @@ def validate_net_config(net_dict: dict[str, Any]) -> None:
 
     Raises:
         LayerConfigError: If the configuration is invalid.
+
     """
     # Validate n_cycles
     if "n_cycles" in net_dict:

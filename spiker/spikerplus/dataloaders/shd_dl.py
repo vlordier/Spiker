@@ -32,6 +32,7 @@ class ShdDL:
                 standard preprocessing.
             download: Whether to download the dataset if not present.
             num_steps: Number of time bins for frame conversion.
+
         """
         _ = download  # Reserved for future use
 
@@ -81,6 +82,7 @@ class ShdDL:
 
         Returns:
             Tuple of (train_loader, test_loader).
+
         """
         if not num_workers:
             num_workers = self.num_cpu_cores
@@ -112,6 +114,7 @@ class Squeeze:
 
         Args:
             dim: Dimension to squeeze.
+
         """
         self.dim = dim
 
@@ -126,6 +129,7 @@ class Squeeze:
 
         Raises:
             ValueError: If the dimension doesn't have size 1.
+
         """
         if tensor.shape[self.dim] == 1:
             return tensor.squeeze(self.dim)
@@ -146,5 +150,6 @@ class ToFloatTensor:
 
         Returns:
             Float tensor.
+
         """
         return torch.tensor(array, dtype=torch.float32)
