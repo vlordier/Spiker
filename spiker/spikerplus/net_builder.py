@@ -1,3 +1,9 @@
+"""Network builder for Spiker framework.
+
+This module provides classes for building and configuring spiking neural networks
+with various neuron models and configurations.
+"""
+
 import json
 import logging
 import re
@@ -12,8 +18,18 @@ from .types import NeuronModel, ResetMechanism
 
 
 class SNN(nn.Module):
-    def __init__(self, net_dict: dict[str, Any]):
+    """Spiking Neural Network.
 
+    A PyTorch module implementing a spiking neural network with various
+    neuron models including LIF, IF, Synaptic, and their recurrent variants.
+    """
+
+    def __init__(self, net_dict: dict[str, Any]) -> None:
+        """Initialize SNN.
+
+        Args:
+            net_dict: Network configuration dictionary.
+        """
         super().__init__()
 
         self.n_cycles: int = net_dict["n_cycles"]
@@ -254,7 +270,18 @@ class SNN(nn.Module):
 
 
 class NetBuilder:
-    def __init__(self, net_dict: dict[str, Any]):
+    """Network builder for spiking neural networks.
+
+    Provides configuration parsing and validation for building
+    spiking neural networks with various neuron models.
+    """
+
+    def __init__(self, net_dict: dict[str, Any]) -> None:
+        """Initialize network builder.
+
+        Args:
+            net_dict: Network configuration dictionary.
+        """
 
         self.default_dict: dict[str, Any] = {
             "n_cycles": 73,
