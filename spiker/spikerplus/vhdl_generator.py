@@ -1,22 +1,27 @@
 from math import log2
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import torch
+import torch.nn as nn
 
 from .vhdl.layer import Layer
 from .vhdl.network import FullAccelerator, Network
 
 
 class VhdlGenerator:
-    def __init__(self, net, optim_config):
+    def __init__(self, net: nn.Module, optim_config: dict[str, Any]) -> None:
 
         self.net = net
         self.optim_config = optim_config
 
-        self.input_size = self.input_size(next(iter(self.net.layers)))
-        self.output_size = self.output_size(list(self.net.layers)[-2])
+        self.input_size: int = self.input_size(next(iter(self.net.layers)))
+        self.output_size: int = self.output_size(list(self.net.layers)[-2])
 
-    def generate(self, functional=True, interface=False, debug=False):
+    def generate(
+        self, functional: bool = True, interface: bool = False, debug: bool = False
+    ) -> Network | FullAccelerator:
 
         vhdl_net = Network(self.net.n_cycles, debug=debug)
         self.functional = functional
@@ -33,7 +38,7 @@ class VhdlGenerator:
 
         return FullAccelerator(vhdl_net, self.input_size, self.output_size)
 
-    def input_size(self, layer):
+    def input_size(self, layer: str) -> int:
 
         if "fc" in layer:
             ff_w = self.extract_weights(layer)
@@ -42,7 +47,7 @@ class VhdlGenerator:
 
         raise ValueError("Cannot compute size. I need a linear layer")
 
-    def output_size(self, layer):
+    def output_size(self, layer: str) -> int:
 
         if "fc" in layer:
             ff_w = self.extract_weights(layer)
@@ -51,7 +56,7 @@ class VhdlGenerator:
 
         raise ValueError("Cannot compute size. I need a linear layer")
 
-    def init_layer(self, layer, ff_w):
+    def init_layer(self, layer: str, ff_w: npt.NDArray[np.float64]) -> Layer:
 
         th = np.repeat(self.extract_threshold(layer), ff_w.shape[0])
         beta_shift = self.extract_beta(layer)
@@ -75,7 +80,7 @@ class VhdlGenerator:
             functional=self.functional,
         )
 
-    def extract_weights(self, layer):
+    def extract_weights(self, layer: str) -> npt.NDArray[np.float64] | None:
 
         if "weight" in dir(self.net.layers[layer]):
             return self.net.layers[layer].weight.data.cpu().numpy()
@@ -85,14 +90,14 @@ class VhdlGenerator:
 
         return None
 
-    def extract_threshold(self, layer):
+    def extract_threshold(self, layer: str) -> npt.NDArray[np.float64] | None:
 
         if "threshold" in dir(self.net.layers[layer]):
             return np.array([self.net.layers[layer].threshold.data.item()])
 
         return None
 
-    def extract_reset(self, layer):
+    def extract_reset(self, layer: str) -> str | None:
 
         if "reset_mechanism" in dir(self.net.layers[layer]):
             reset = self.net.layers[layer].reset_mechanism

@@ -1,7 +1,9 @@
 import json
 import logging
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from tabulate import tabulate
 
@@ -11,16 +13,25 @@ from .types import ReadoutType
 
 
 class Quantizer:
-    def fixed_point(self, value, fp_dec, bitwidth):
+    def fixed_point(
+        self,
+        value: npt.NDArray[np.float64] | torch.Tensor | float,
+        fp_dec: int,
+        bitwidth: int,
+    ) -> npt.NDArray[np.float64] | torch.Tensor | float:
 
         quant = value * 2**fp_dec
 
         return self.saturated_int(quant, bitwidth)
 
-    def saturated_int(self, value, bitwidth):
+    def saturated_int(
+        self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
+    ) -> npt.NDArray[np.float64] | torch.Tensor | float:
         return self.saturate(self.to_int(value), bitwidth)
 
-    def saturate(self, value, bitwidth):
+    def saturate(
+        self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
+    ) -> npt.NDArray[np.float64] | torch.Tensor | float:
 
         if (
             type(value).__module__ == np.__name__
@@ -39,7 +50,9 @@ class Quantizer:
 
         return float(value)
 
-    def to_int(self, value):
+    def to_int(
+        self, value: npt.NDArray[np.float64] | torch.Tensor | float
+    ) -> npt.NDArray[np.float64] | torch.Tensor | float:
 
         if type(value).__module__ == np.__name__:
             quant = value.astype(int).astype(float)
@@ -54,7 +67,7 @@ class Quantizer:
 
 
 class QuantSNN(SNN):
-    def __init__(self, net_dict, neurons_bw):
+    def __init__(self, net_dict: dict[str, Any], neurons_bw: int) -> None:
 
         super().__init__(net_dict)
 
@@ -62,11 +75,11 @@ class QuantSNN(SNN):
 
         self.quantizer = Quantizer()
 
-    def forward(self, input_spikes):
+    def forward(self, input_spikes: torch.Tensor) -> None:
 
         self.reset()
 
-        cur = {}
+        cur: dict[str, torch.Tensor] = {}
 
         if input_spikes.shape[0] != self.n_cycles:
             logging.warning(
@@ -78,7 +91,7 @@ class QuantSNN(SNN):
 
         for step in range(input_spikes.shape[0]):
             first = True
-            prev_layer = None
+            prev_layer: str | None = None
 
             for layer in self.layers:
                 idx = str(self.extract_index(layer))
@@ -124,7 +137,7 @@ class QuantSNN(SNN):
 
         self.stack_rec()
 
-    def quantize(self, layer):
+    def quantize(self, layer: str) -> None:
 
         if "fc" not in layer:
             self.mem[layer] = self.quantizer.saturated_int(
@@ -138,12 +151,18 @@ class QuantSNN(SNN):
 
 
 class Optimizer(Trainer, NetBuilder):
-    def __init__(self, net, net_dict, optim_config, readout_type=ReadoutType.MEM):
+    def __init__(
+        self,
+        net: SNN,
+        net_dict: dict[str, Any],
+        optim_config: dict[str, Any],
+        readout_type: str | ReadoutType = ReadoutType.MEM,
+    ) -> None:
 
         Trainer.__init__(self, net, readout_type)
         NetBuilder.__init__(self, net_dict)
 
-        self.default_config = {
+        self.default_config: dict[str, dict[str, int]] = {
             "weights_bw": {"min": 4, "max": 8},
             "neurons_bw": {"min": 4, "max": 10},
             "fp_dec": {"min": 2, "max": 3},
@@ -164,9 +183,11 @@ class Optimizer(Trainer, NetBuilder):
         else:
             self.device = torch.device("cpu")
 
-    def parse_opt_config(self, optim_config):
+    def parse_opt_config(
+        self, optim_config: dict[str, Any]
+    ) -> dict[str, dict[str, int]]:
 
-        optim_dict = {}
+        optim_dict: dict[str, dict[str, int]] = {}
 
         for key in optim_config:
             if key in self.allowed_keys:
@@ -198,7 +219,7 @@ class Optimizer(Trainer, NetBuilder):
 
         return optim_dict
 
-    def optimize(self, dataloader):
+    def optimize(self, dataloader: torch.utils.data.DataLoader) -> None:
 
         headers = [
             "Fixed-point decimals",
@@ -207,7 +228,7 @@ class Optimizer(Trainer, NetBuilder):
             "Loss",
             "Accuracy",
         ]
-        table = []
+        table: list[list[str]] = []
 
         for fp_dec in self.optim_config["fp_dec"]:
             for w_bw in self.optim_config["weights_bw"]:
@@ -230,11 +251,11 @@ class Optimizer(Trainer, NetBuilder):
                         ]
                     )
 
-        table = "\n" + tabulate(table, headers=headers, tablefmt="grid")
+        table_str = "\n" + tabulate(table, headers=headers, tablefmt="grid")
 
-        logging.info(table)
+        logging.info(table_str)
 
-    def build_quant_snn(self, weights_bw, neurons_bw, fp_dec):
+    def build_quant_snn(self, weights_bw: int, neurons_bw: int, fp_dec: int) -> None:
 
         self.net = QuantSNN(self.net_dict, neurons_bw)
 
