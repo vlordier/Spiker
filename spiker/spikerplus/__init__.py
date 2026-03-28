@@ -29,13 +29,18 @@ from .optimizer import Optimizer
 from .trainer import Trainer
 from .types import (
     LayerConfig,
+    LayerDict,
     NetworkConfig,
+    NetworkDict,
     NeuronModel,
     OptimizerConfig,
+    OptimizerDict,
+    OptimizerRangeDict,
     QuantizationConfig,
     ReadoutType,
     ResetMechanism,
     TrainingConfig,
+    TrainingDict,
 )
 from .validation import (
     validate_choice,
@@ -66,13 +71,18 @@ __all__ = [
     "VhdlGenerator",
     # Types
     "LayerConfig",
+    "LayerDict",
     "NetworkConfig",
+    "NetworkDict",
     "NeuronModel",
     "OptimizerConfig",
+    "OptimizerDict",
+    "OptimizerRangeDict",
     "QuantizationConfig",
     "ReadoutType",
     "ResetMechanism",
     "TrainingConfig",
+    "TrainingDict",
     # Validation
     "validate_choice",
     "validate_layer_config",
