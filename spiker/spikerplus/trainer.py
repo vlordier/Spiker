@@ -1,3 +1,9 @@
+"""Trainer for spiking neural networks.
+
+This module provides training and evaluation functionality for spiking
+neural networks with various readout strategies.
+"""
+
 import logging
 import os
 import time
@@ -11,6 +17,12 @@ from .types import ReadoutType
 
 
 class Trainer:
+    """Trainer for spiking neural networks.
+
+    Provides training and evaluation functionality with support for
+    multiple readout strategies and configurable loss functions.
+    """
+
     def __init__(
         self,
         net: nn.Module,
@@ -18,6 +30,14 @@ class Trainer:
         optimizer: torch.optim.Optimizer | None = None,
         loss_fn: nn.Module | None = None,
     ) -> None:
+        """Initialize trainer.
+
+        Args:
+            net: Neural network to train.
+            readout_type: Type of readout to use (spk, mem, etc.).
+            optimizer: Optimizer for training, or None for default Adam.
+            loss_fn: Loss function, or None for CrossEntropyLoss.
+        """
 
         self.supported_readouts = [readout.value for readout in ReadoutType]
 
