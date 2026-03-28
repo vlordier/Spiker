@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spikerplus"
+version = "2.0.3"
+description = "Build, train, optimize and generate hardware accelerators for Spiking Neural Networks using VHDL"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    {name = "Alessio Carpegna", email = "alessio.carpegna@polito.it"},
+    {name = "Alessandro Savino"},
+    {name = "Stefano Di Carlo"}
+]
+maintainers = [
+    {name = "Alessio Carpegna", email = "alessio.carpegna@polito.it"}
+]
+keywords = ["spiking neural networks", "FPGA", "VHDL", "neuromorphic computing", "edge AI"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Code Generators",
+]
+dependencies = [
+    "numpy>=1.20",
+    "torch>=1.12",
+    "snntorch>=0.9.1",
+    "tabulate>=0.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/smilies-polito/Spiker"
+Repository = "https://github.com/smilies-polito/Spiker.git"
+Documentation = "https://github.com/smilies-polito/Spiker#readme"
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+dev = ["ruff>=0.6.0", "pre-commit>=3.0"]
+
+# Explicitly define where packages are located to avoid flat-layout issues
+[tool.setuptools.packages.find]
+where = ["spiker"]
+
+[tool.ruff]
+# Ruff configuration
+line-length = 88
+target-version = "py312"
+indent-width = 4
+
+[tool.ruff.lint]
+# Enable a set of rules (we'll use the recommended set for now)
+select = ["E", "F", "W", "C90"]
+ignore = []
+
+[tool.ruff.format]
+# Format settings (we'll use black-like formatting via ruff)
+quote-style = "double"

@@ -1,8 +1,9 @@
 # Spiker: A Framework for Efficient Spiking Neural Network FPGA Accelerators
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://badge.fury.io/py/spikerplus.svg)](https://badge.fury.io/py/spikerplus)
+[![Docs: Documentation](https://img.shields.io/badge/Docs-Documentation-blue)](https://github.com/smilies-polito/Spiker#readme)
 
 Spiker is a comprehensive framework for generating efficient, low-power, and low-area customized Spiking Neural Networks (SNN) accelerators on FPGA for inference at the edge. It presents a library of highly efficient neuron architectures and a design framework, enabling the development of complex neural network accelerators with minimal Python code.
 
@@ -32,6 +33,7 @@ Spiker provides an end-to-end workflow for designing SNN hardware accelerators:
 - **Automatic VHDL Generation**: From trained PyTorch models to synthesizable VHDL
 - **FPGA-Optimized**: Designed for resource-constrained edge devices
 - **Well-Documented**: Extensive documentation and tutorials
+- **Modern Python**: Requires Python 3.12+ with type hints and modern tooling (ruff, pre-commit)
 
 ## 📁 Project Structure
 
@@ -39,7 +41,7 @@ Spiker provides an end-to-end workflow for designing SNN hardware accelerators:
 Spiker/
 ├── spiker/                 # Main Python package
 │   ├── __init__.py         # Package exports
-│   ├── setup.py            # Installation script
+│   ├── setup.py            # Installation script (legacy)
 │   └── spikerplus/         # Core implementation
 │       ├── __init__.py     # Module exports
 │       ├── net_builder.py  # SNN construction utilities
@@ -50,7 +52,8 @@ Spiker/
 │       └── vhdl/           # VHDL templates and components
 ├── Tutorials/              # Jupyter notebooks and examples
 ├── Doc/                    # Documentation files
-└── README.md               # This file
+├── README.md               # This file
+└── pyproject.toml          # Modern build configuration (PEP 621)
 ```
 
 ## 🚀 Installation
@@ -58,6 +61,11 @@ Spiker/
 ### From PyPI (Recommended)
 ```bash
 pip install spikerplus
+```
+
+### Using uv (Alternative, faster installer)
+```bash
+uv pip install spikerplus
 ```
 
 ### From Source
@@ -69,9 +77,15 @@ pip install .
 
 ### Development Installation
 ```bash
+# Clone the repository
 git clone https://github.com/smilies-polito/Spiker.git
-cd Spiker/spiker
-pip install -e .
+cd Spiker
+
+# Install the package in development mode with development dependencies
+uv pip install -e .[dev]
+
+# Install pre-commit hooks
+pre-commit install
 ```
 
 ## 📖 Usage

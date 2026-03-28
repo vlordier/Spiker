@@ -43,9 +43,9 @@ def test_net_builder():
 
     # Test forward pass
     input_spikes = torch.randn(10, 2, 5)  # [time_steps, batch_size, n_inputs]
-    output = snn(input_spikes)
+    snn(input_spikes)
 
-    print(f"Network built successfully. Output shape: {len(output.spk_rec)} layers")
+    print(f"Network built successfully. Output shape: {len(snn.spk_rec)} layers")
     return True
 
 
