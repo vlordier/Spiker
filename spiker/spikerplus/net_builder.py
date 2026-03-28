@@ -380,8 +380,7 @@ class NetBuilder:
         """
         snn = SNN(self.net_dict)
 
-        log_message = "Network ready: " + str(snn) + "\n"
-        logging.info(log_message)
+        logging.info("Network ready: %s", snn)
 
         return snn
 

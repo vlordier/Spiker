@@ -222,7 +222,7 @@ class Trainer:
             ReadoutType.MEM_AVG,
             ReadoutType.MEM_SOFTMAX,
         ):
-            _, out_rec = list(self.net.mem_rec.items())[-1]
+            out_rec = next(reversed(self.net.mem_rec.values()))
 
             if self.readout_type_enum == ReadoutType.MEM_MAX:
                 out_rec, _ = torch.max(out_rec, dim=0, keepdim=True)
@@ -234,7 +234,7 @@ class Trainer:
                 out_rec = fn.softmax(out_rec, dim=-1)
 
         else:
-            _, out_rec = list(self.net.spk_rec.items())[-1]
+            out_rec = next(reversed(self.net.spk_rec.values()))
 
             if self.readout_type_enum == ReadoutType.SPK_COUNT:
                 out_rec = torch.sum(out_rec, dim=0, keepdim=True)
@@ -256,10 +256,10 @@ class Trainer:
             ReadoutType.MEM_AVG,
             ReadoutType.MEM_SOFTMAX,
         ):
-            _, out_rec = list(self.net.mem_rec.items())[-1]
+            out_rec = next(reversed(self.net.mem_rec.values()))
             _, idx = torch.mean(out_rec, dim=0).max(dim=1)
         else:
-            _, out_rec = list(self.net.spk_rec.items())[-1]
+            out_rec = next(reversed(self.net.spk_rec.values()))
             _, idx = torch.sum(out_rec, dim=0).max(dim=1)
         return torch.mean((labels == idx).float().detach().cpu()).item()
 

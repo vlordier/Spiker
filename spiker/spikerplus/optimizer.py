@@ -359,9 +359,7 @@ class Optimizer:
 
                 optim_dict[key] = [i for i in range(min_value, max_value + 1)]
 
-        log_message = "Optimizer configured: \n"
-        log_message += json.dumps(optim_dict, indent=4)
-        logging.info(log_message)
+        logging.info("Optimizer configured: \n%s", json.dumps(optim_dict, indent=4))
 
         return optim_dict
 
