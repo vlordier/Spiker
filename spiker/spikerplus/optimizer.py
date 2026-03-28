@@ -1,3 +1,9 @@
+"""Optimizer and quantizer for spiking neural networks.
+
+This module provides quantization-aware optimization for spiking neural networks,
+including fixed-point quantization and bit-width optimization.
+"""
+
 import json
 import logging
 from typing import Any
@@ -13,13 +19,28 @@ from .types import ReadoutType
 
 
 class Quantizer:
+    """Fixed-point quantizer for neural network parameters.
+
+    Provides quantization functions for converting floating-point values
+    to fixed-point representations with specified bit-widths.
+    """
+
     def fixed_point(
         self,
         value: npt.NDArray[np.float64] | torch.Tensor | float,
         fp_dec: int,
         bitwidth: int,
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
+        """Apply fixed-point quantization.
 
+        Args:
+            value: Value to quantize.
+            fp_dec: Number of fractional bits.
+            bitwidth: Total bit-width for quantization.
+
+        Returns:
+            Quantized value.
+        """
         quant = value * 2**fp_dec
 
         return self.saturated_int(quant, bitwidth)
@@ -27,6 +48,15 @@ class Quantizer:
     def saturated_int(
         self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
+        """Apply saturated integer conversion.
+
+        Args:
+            value: Value to convert.
+            bitwidth: Total bit-width for quantization.
+
+        Returns:
+            Converted value.
+        """
         return self.saturate(self.to_int(value), bitwidth)
 
     def saturate(
@@ -67,7 +97,19 @@ class Quantizer:
 
 
 class QuantSNN(SNN):
+    """Quantized Spiking Neural Network.
+
+    Extends the base SNN with quantized neuron states for
+    hardware-efficient inference.
+    """
+
     def __init__(self, net_dict: dict[str, Any], neurons_bw: int) -> None:
+        """Initialize quantized SNN.
+
+        Args:
+            net_dict: Network configuration dictionary.
+            neurons_bw: Bit-width for neuron state quantization.
+        """
 
         super().__init__(net_dict)
 
@@ -151,6 +193,12 @@ class QuantSNN(SNN):
 
 
 class Optimizer(Trainer, NetBuilder):
+    """Quantization-aware optimizer for spiking neural networks.
+
+    Provides grid search over quantization parameters to find
+    optimal bit-widths for weights and neuron states.
+    """
+
     def __init__(
         self,
         net: SNN,
@@ -158,6 +206,14 @@ class Optimizer(Trainer, NetBuilder):
         optim_config: dict[str, Any],
         readout_type: str | ReadoutType = ReadoutType.MEM,
     ) -> None:
+        """Initialize optimizer.
+
+        Args:
+            net: Neural network to optimize.
+            net_dict: Network configuration dictionary.
+            optim_config: Optimizer configuration dictionary.
+            readout_type: Type of readout to use.
+        """
 
         Trainer.__init__(self, net, readout_type)
         NetBuilder.__init__(self, net_dict)
