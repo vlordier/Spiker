@@ -7,36 +7,30 @@ import torch.nn as nn
 import torch.nn.functional as fn
 from torch.utils.data import DataLoader
 
+from .types import ReadoutType
+
 
 class Trainer:
     def __init__(
         self,
         net: nn.Module,
-        readout_type: str = "mem",
+        readout_type: str | ReadoutType = ReadoutType.MEM,
         optimizer: torch.optim.Optimizer | None = None,
         loss_fn: nn.Module | None = None,
     ) -> None:
 
-        self.supported_readouts = [
-            "spk",
-            "spk_count",
-            "mem",
-            "mem_softmax",
-            "mem_max",
-            "mem_avg",
-        ]
+        self.supported_readouts = [readout.value for readout in ReadoutType]
 
         self.net = net
 
-        if readout_type in self.supported_readouts:
-            self.readout_type = readout_type
-
+        if isinstance(readout_type, ReadoutType):
+            self.readout_type = readout_type.value
         else:
-            raise ValueError(
-                "Invalid readout type. Choose between "
-                + str(self.supported_readouts)
-                + "\n"
-            )
+            if readout_type not in self.supported_readouts:
+                msg = f"Invalid readout type. Choose from: {self.supported_readouts}"
+                raise ValueError(msg)
+
+            self.readout_type = readout_type
 
         if optimizer is None:
             adam_beta1: float = 0.9

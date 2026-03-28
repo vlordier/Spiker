@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Any
 
 from .exceptions import LayerConfigError, NeuronModelError
+from .types import NeuronModel, ResetMechanism
 
 
 def validate_type(value: Any, expected_type: type, param_name: str) -> None:
@@ -165,7 +166,7 @@ def _validate_neurons_param(layer_dict: dict[str, Any]) -> None:
 def _validate_model_param(layer_dict: dict[str, Any]) -> None:
     """Validate neuron_model parameter."""
     if "neuron_model" in layer_dict:
-        valid_models = ["if", "lif", "syn", "rif", "rlif", "rsyn"]
+        valid_models = [model.value for model in NeuronModel]
         validate_choice(layer_dict["neuron_model"], valid_models, "neuron_model")
 
 
@@ -181,7 +182,7 @@ def _validate_threshold_param(layer_dict: dict[str, Any]) -> None:
 def _validate_reset_param(layer_dict: dict[str, Any]) -> None:
     """Validate reset_mechanism parameter."""
     if "reset_mechanism" in layer_dict:
-        valid_resets = ["zero", "subtract", "none"]
+        valid_resets = [mechanism.value for mechanism in ResetMechanism]
         validate_choice(layer_dict["reset_mechanism"], valid_resets, "reset_mechanism")
 
 

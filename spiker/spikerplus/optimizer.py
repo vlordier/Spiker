@@ -7,6 +7,7 @@ from tabulate import tabulate
 
 from .net_builder import SNN, NetBuilder
 from .trainer import Trainer
+from .types import ReadoutType
 
 
 class Quantizer:
@@ -137,7 +138,7 @@ class QuantSNN(SNN):
 
 
 class Optimizer(Trainer, NetBuilder):
-    def __init__(self, net, net_dict, optim_config, readout_type="mem"):
+    def __init__(self, net, net_dict, optim_config, readout_type=ReadoutType.MEM):
 
         Trainer.__init__(self, net, readout_type)
         NetBuilder.__init__(self, net_dict)

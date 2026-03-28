@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 from .exceptions import LayerConfigError, NeuronModelError
+from .types import NeuronModel, ResetMechanism
 
 
 class SNN(nn.Module):
@@ -283,27 +284,29 @@ class NetBuilder:
         }
 
         self.net_allowed_keys: list[str] = self.select_keys()
-        self.supported_models: list[str] = ["if", "lif", "syn", "rif", "rlif", "rsyn"]
+        self.supported_models: list[str] = [model.value for model in NeuronModel]
 
         self.has_alpha: dict[str, bool] = {
-            "if": False,
-            "lif": False,
-            "syn": True,
-            "rif": False,
-            "rlif": False,
-            "rsyn": True,
+            NeuronModel.IF.value: False,
+            NeuronModel.LIF.value: False,
+            NeuronModel.SYN.value: True,
+            NeuronModel.RIF.value: False,
+            NeuronModel.RLIF.value: False,
+            NeuronModel.RSYN.value: True,
         }
 
         self.has_beta: dict[str, bool] = {
-            "if": False,
-            "lif": True,
-            "syn": True,
-            "rif": False,
-            "rlif": True,
-            "rsyn": True,
+            NeuronModel.IF.value: False,
+            NeuronModel.LIF.value: True,
+            NeuronModel.SYN.value: True,
+            NeuronModel.RIF.value: False,
+            NeuronModel.RLIF.value: True,
+            NeuronModel.RSYN.value: True,
         }
 
-        self.supported_resets: list[str] = ["zero", "subtract", "none"]
+        self.supported_resets: list[str] = [
+            mechanism.value for mechanism in ResetMechanism
+        ]
 
         self.net_dict: dict[str, Any] = self.parse_config(net_dict)
 
