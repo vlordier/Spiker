@@ -64,7 +64,7 @@ class GenericCodeBlock(dict):
             default it is newline
 
         """
-        if type(text) == str:
+        if isinstance(text, str):
             self[self.index] = SingleCodeLine(text, line_end)
 
         elif hasattr(text, "code") and callable(text.code):

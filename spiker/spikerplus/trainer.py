@@ -75,11 +75,13 @@ class Trainer:
 
         self.net.to(self.device)
 
-        log_message = "Training set-up: \n"
-        log_message += "Readout type: " + str(self.readout_type) + "\n"
-        log_message += "Optimizer: " + str(self.optimizer) + "\n"
-        log_message += "Loss function: " + str(self.loss_fn) + "\n"
-        log_message += "Device: " + str(self.device) + "\n"
+        log_message = (
+            f"Training set-up: \n"
+            f"Readout type: {self.readout_type}\n"
+            f"Optimizer: {self.optimizer}\n"
+            f"Loss function: {self.loss_fn}\n"
+            f"Device: {self.device}\n"
+        )
 
         logging.info(log_message)
 
@@ -106,15 +108,15 @@ class Trainer:
 
         batch_size = next(iter(train_loader))[0].shape[0]
 
-        log_message = "Epochs: " + str(n_epochs) + "\n"
-        log_message += "Batch size: " + str(batch_size) + "\n"
-        log_message += "Training batches: " + str(len(train_loader)) + "\n"
-        log_message += "Training samples: "
-        log_message += str(len(train_loader) * batch_size) + "\n"
-        log_message += "Validation batches: " + str(len(val_loader)) + "\n"
-        log_message += "Validation samples: "
-        log_message += str(len(val_loader) * batch_size) + "\n\n"
-        log_message += "Begin training\n\n"
+        log_message = (
+            f"Epochs: {n_epochs}\n"
+            f"Batch size: {batch_size}\n"
+            f"Training batches: {len(train_loader)}\n"
+            f"Training samples: {len(train_loader) * batch_size}\n"
+            f"Validation batches: {len(val_loader)}\n"
+            f"Validation samples: {len(val_loader) * batch_size}\n\n"
+            f"Begin training\n\n"
+        )
 
         logging.info(log_message)
 
@@ -283,23 +285,17 @@ class Trainer:
         """
         log_message = ""
 
-        epoch = str(epoch)
-        log_message += "Epoch " + epoch + "\n"
+        log_message += f"Epoch {epoch}\n"
 
         if start_time:
             elapsed = time.time() - start_time
-            elapsed = f"{elapsed:.2f}" + "s"
-            log_message += "Elapsed time " + elapsed + "\n"
+            log_message += f"Elapsed time {elapsed:.2f}s\n"
 
-        train_loss = f"{train_loss:.2f}"
-        val_loss = f"{val_loss:.2f}"
-        log_message += "Train loss: " + train_loss + "\n"
-        log_message += "Validation loss: " + val_loss + "\n"
+        log_message += f"Train loss: {train_loss:.2f}\n"
+        log_message += f"Validation loss: {val_loss:.2f}\n"
 
-        train_acc = str(train_acc * 100) + "%"
-        val_acc = str(val_acc * 100) + "%"
-        log_message += "Train accuracy: " + train_acc + "\n"
-        log_message += "Validation accuracy: " + val_acc + "\n"
+        log_message += f"Train accuracy: {train_acc * 100:.2f}%\n"
+        log_message += f"Validation accuracy: {val_acc * 100:.2f}%\n"
 
         logging.info(log_message)
 
@@ -317,7 +313,7 @@ class Trainer:
         if not out_file:
             out_file = "trained_state_dict.pt"
 
-        out_path = out_dir + "/" + out_file
+        out_path = f"{out_dir}/{out_file}"
 
         torch.save(self.net.state_dict(), out_path)
 

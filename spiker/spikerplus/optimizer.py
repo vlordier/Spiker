@@ -388,8 +388,7 @@ class Optimizer:
 
                     loss, acc = self.evaluate(dataloader)
 
-                    log_message = "\nLoss: " + f"{loss:.2f}" + "\n"
-                    log_message += "Acc: " + f"{acc * 100:.2f}" + "%\n"
+                    log_message = f"\nLoss: {loss:.2f}\nAcc: {acc * 100:.2f}%\n"
                     logging.info(log_message)
 
                     table.append(
@@ -398,7 +397,7 @@ class Optimizer:
                             str(neuron_bw),
                             str(w_bw),
                             str(loss),
-                            f"{acc * 100:.2f}" + "%",
+                            f"{acc * 100:.2f}%",
                         ]
                     )
 
@@ -434,8 +433,10 @@ class Optimizer:
 
         self.net.to(self.device)
 
-        log_message = "Network ready:\n"
-        log_message += "Fixed-point decimals: " + str(fp_dec) + "\n"
-        log_message += "Neurons bitwidth: " + str(neurons_bw) + "\n"
-        log_message += "Weights bitwidth: " + str(weights_bw) + "\n"
+        log_message = (
+            f"Network ready:\n"
+            f"Fixed-point decimals: {fp_dec}\n"
+            f"Neurons bitwidth: {neurons_bw}\n"
+            f"Weights bitwidth: {weights_bw}\n"
+        )
         logging.info(log_message)
