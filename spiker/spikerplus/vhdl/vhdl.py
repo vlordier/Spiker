@@ -7,57 +7,45 @@ from .utils import is_iterable, obj_types
 from .vhdltools.write_file import write_file
 
 
-def write_file_all(component, output_dir = "output", rm = False):
+def write_file_all(component, output_dir="output", rm=False):
 
-    write_file(
-        component   = component,
-        output_dir  = output_dir,
-        rm      = rm
-    )
+    write_file(component=component, output_dir=output_dir, rm=rm)
 
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     for attr_name in attr_list:
-
         sub = getattr(component, attr_name)
 
-        if hasattr(sub, "write_file_all") and \
-        callable(sub.write_file_all):
-            sub.write_file_all(output_dir = output_dir)
-        elif hasattr(sub, "write_file") and \
-        callable(sub.write_file):
-            sub.write_file(output_dir = output_dir)
+        if hasattr(sub, "write_file_all") and callable(sub.write_file_all):
+            sub.write_file_all(output_dir=output_dir)
+        elif hasattr(sub, "write_file") and callable(sub.write_file):
+            sub.write_file(output_dir=output_dir)
 
     if is_iterable(component) and component.keys():
-
         for key in component:
-
-            if hasattr(component[key], "write_file_all") and \
-            callable(component[key].write_file_all):
-                component[key].write_file_all(output_dir
-                = output_dir)
-            elif hasattr(component[key], "write_file") and \
-            callable(component[key].write_file):
-                component[key].write_file(output_dir = output_dir)
-
-
+            if hasattr(component[key], "write_file_all") and callable(
+                component[key].write_file_all
+            ):
+                component[key].write_file_all(output_dir=output_dir)
+            elif hasattr(component[key], "write_file") and callable(
+                component[key].write_file
+            ):
+                component[key].write_file(output_dir=output_dir)
 
 
-def vhdl_compile(name, output_dir = "output"):
+def vhdl_compile(name, output_dir="output"):
 
     command = "cd " + output_dir + "; "
     command = command + "xvhdl --2008 " + name
 
-    sp.run(command, shell = True)
+    sp.run(command, shell=True)
 
     print("\n")
 
 
-def vhdl_obj_compile(component, output_dir = "output"):
+def vhdl_obj_compile(component, output_dir="output"):
 
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     if "entity" in attr_list:
         name = component.entity.name
@@ -71,71 +59,66 @@ def vhdl_obj_compile(component, output_dir = "output"):
     name = name + ".vhd"
 
     print("\nCompiling " + name + "\n")
-    vhdl_compile(name, output_dir = output_dir)
+    vhdl_compile(name, output_dir=output_dir)
 
 
-
-def fast_compile(component, output_dir = "output"):
+def fast_compile(component, output_dir="output"):
 
     if hasattr(component, "components") and component.components:
-
         filenames = ""
 
         for name in component.components:
             filenames = filenames + name + ".vhd" + " "
 
         print("\nCompiling " + filenames + "\n")
-        vhdl_compile(filenames, output_dir = output_dir)
+        vhdl_compile(filenames, output_dir=output_dir)
 
-    vhdl_obj_compile(component, output_dir = output_dir)
+    vhdl_obj_compile(component, output_dir=output_dir)
 
 
-def clear_compile(component, output_dir = "output"):
+def clear_compile(component, output_dir="output"):
 
     if hasattr(component, "components") and component.components:
-
         filenames = ""
 
         for name in component.components:
             filename = name + ".vhd"
 
             if not isfile(output_dir + "/" + filename):
-                raise ValueError("File " + filename +
-                    " doesn't exist. Create it "
-                    "first")
+                raise ValueError("File " + filename + " doesn't exist. Create it first")
 
             print("\nCompiling " + filename + "\n")
-            vhdl_compile(filename, output_dir = output_dir)
+            vhdl_compile(filename, output_dir=output_dir)
 
-    vhdl_obj_compile(component, output_dir = output_dir)
+    vhdl_obj_compile(component, output_dir=output_dir)
 
 
-def elaborate(component, output_dir = "output"):
+def elaborate(component, output_dir="output"):
 
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     if "entity" not in attr_list:
         raise TypeError("Component has no entity to compile")
 
-    name        = component.entity.name
+    name = component.entity.name
 
-    print("\nElaborating component %s\n" %(name))
+    print("\nElaborating component %s\n" % (name))
 
     command = "cd " + output_dir + "; "
     command = command + "xelab " + name
 
-    sp.run(command, shell = True)
+    sp.run(command, shell=True)
 
     print("\n")
 
 
-def simulate(component, output_dir = "output", sim_duration = "1000ns", log =
-        False):
+def simulate(component, output_dir="output", sim_duration="1000ns", log=False):
 
     if type(sim_duration) is not str:
-        raise ValueError("sim_duration must be string in the form: "
-            "<number><time unit measure>. E.g. 1000ns")
+        raise ValueError(
+            "sim_duration must be string in the form: "
+            "<number><time unit measure>. E.g. 1000ns"
+        )
 
     if type(output_dir) is not str:
         raise ValueError("output_dir must be string.")
@@ -143,37 +126,33 @@ def simulate(component, output_dir = "output", sim_duration = "1000ns", log =
     sim_script = "sim_script.tcl"
 
     with open(output_dir + "/" + sim_script, "w") as file:
-
         file.write("run " + sim_duration + "\n")
         file.write("quit")
 
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     if "entity" not in attr_list:
         raise TypeError("Component has no entity to compile")
 
-    name        = component.entity.name
+    name = component.entity.name
 
     if log:
-        logging.info("\nSimulating component %s\n" %(name))
+        logging.info("\nSimulating component %s\n" % (name))
 
     command = "cd " + output_dir + "; "
     command = command + "xsim " + name + " -t " + sim_script
     command = command + " > /dev/null"
 
-    sp.run(command, shell = True)
+    sp.run(command, shell=True)
 
 
 def sub_components(component):
 
     sub_comp = []
 
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     for attr_name in attr_list:
-
         sub = getattr(component, attr_name)
 
         if "VHDLblock" in obj_types(sub):
@@ -186,9 +165,7 @@ def sub_components(component):
             sub_comp += sub.components
 
     if is_iterable(component) and component.keys():
-
         for key in component:
-
             if "VHDLblock" in obj_types(component[key]):
                 sub_comp.append(component[key].entity.name)
 
@@ -201,7 +178,6 @@ def sub_components(component):
     return list(dict.fromkeys(sub_comp))
 
 
-
 def track_signals(signals_dict, name):
 
     signals_list = list(signals_dict.keys())
@@ -211,26 +187,23 @@ def track_signals(signals_dict, name):
     first = True
     invalid_signal = False
 
-    while(exit_flag == 0 and signals_list):
-
-        while first == False and good_answ == False and \
-                invalid_signal == False:
-
+    while not exit_flag and signals_list:
+        while not first and not good_answ and not invalid_signal:
             answer = input("Do you want to add others?(y/n) ")
 
             if answer == "n":
-
                 exit_flag = 1
                 good_answ = True
 
             elif answer == "y":
                 good_answ = True
 
-        if exit_flag == 0:
-
-            input_msg = "Component " + name  + ": which signal " \
-                "do you want to track(write exit to " \
+        if not exit_flag:
+            input_msg = (
+                "Component " + name + ": which signal "
+                "do you want to track(write exit to "
                 "stop)?\n\n" + str(signals_list) + "\n\n"
+            )
 
             signal = input(input_msg)
 
@@ -253,80 +226,58 @@ def track_signals(signals_dict, name):
     return tracked
 
 
+def debug_component(component, db_list=[]):
 
-def debug_component(component, db_list = []):
-
-    attr_list = [ attr for attr in dir(component) if not
-            attr.startswith("__")]
+    attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 
     debug = []
 
     for attr_name in attr_list:
-
         sub_component = getattr(component, attr_name)
 
         if hasattr(sub_component, "debug"):
-
             debug += sub_component.debug
 
             for debug_port in sub_component.debug:
-
-
                 component.entity.port.add(
-                    name        =
-                        debug_port,
-                    direction   = "out",
-                    port_type   = sub_component.entity.\
-                        port[debug_port].port_type
+                    name=debug_port,
+                    direction="out",
+                    port_type=sub_component.entity.port[debug_port].port_type,
                 )
 
     if db_list:
-
         debug_list = []
 
         for signal_name in db_list:
-
             if component.entity.name in signal_name:
-
-                for internal_signal in \
-                component.architecture.signal:
-
-                    if component.entity.name + "_" + \
-                    internal_signal == signal_name:
-
-                        debug_list.append(
-                            internal_signal)
+                for internal_signal in component.architecture.signal:
+                    if component.entity.name + "_" + internal_signal == signal_name:
+                        debug_list.append(internal_signal)
 
     else:
-        debug_list = track_signals(component.architecture.signal,
-                component.entity.name)
+        debug_list = track_signals(component.architecture.signal, component.entity.name)
 
     for debug_port in debug_list:
-
         debug_port_name = component.entity.name + "_" + debug_port
 
         component.entity.port.add(
-            name        = debug_port_name,
-            direction   = "out",
-            port_type   = component.architecture.\
-                    signal[debug_port].\
-                    signal_type)
+            name=debug_port_name,
+            direction="out",
+            port_type=component.architecture.signal[debug_port].signal_type,
+        )
 
         # Bring the signal out
-        connect_string = debug_port_name + " <= " + \
-                    debug_port + ";"
-        component.architecture.bodyCodeHeader.\
-                add(connect_string)
+        connect_string = debug_port_name + " <= " + debug_port + ";"
+        component.architecture.bodyCodeHeader.add(connect_string)
 
         debug.append(debug_port_name)
 
     component.debug = debug
 
 
-def coe_file(str_array, out_file, output_dir = "output"):
+def coe_file(str_array, out_file, output_dir="output"):
 
     with open(output_dir + "/" + out_file, "w") as fp:
-
         fp.write(coe_header)
 
         for i in range(len(str_array)):

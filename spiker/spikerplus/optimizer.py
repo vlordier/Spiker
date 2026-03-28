@@ -357,7 +357,7 @@ class Optimizer:
                 else:
                     max_value = self.default_config[key]["max"]
 
-                optim_dict[key] = [i for i in range(min_value, max_value + 1)]
+                optim_dict[key] = list(range(min_value, max_value + 1))
 
         logging.info("Optimizer configured: \n%s", json.dumps(optim_dict, indent=4))
 
