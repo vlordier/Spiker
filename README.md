@@ -1,84 +1,185 @@
-# Spiker: a framework for the generation of efficient Spiking Neural Networks FPGA accelerators for inference at the edge
-This is the official repo of spiker, a comprehensive framework for generating efficient, low-power, and low-area customized Spiking Neural Networks (SNN) accelerators on FPGA for inference at the edge. spiker presents a library of highly efficient neuron architectures and a design framework, enabling the development of complex neural network accelerators with few lines of Python code. 
+# Spiker: A Framework for Efficient Spiking Neural Network FPGA Accelerators
 
-# Video tutorial
-Spiker comes together with a series of [video tutorials](https://www.youtube.com/watch?v=y3OvFHBXrDE&list=PLkIAXI4vJ8EgfZki2WRh2Da_h-w6gKbsd) which guides you through all the design steps, from the textual description of the Spiking Neural Network etwork to the generation of the hardware accelerator, described using VHDL.  Everything using python language. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://badge.fury.io/py/spikerplus.svg)](https://badge.fury.io/py/spikerplus)
 
+Spiker is a comprehensive framework for generating efficient, low-power, and low-area customized Spiking Neural Networks (SNN) accelerators on FPGA for inference at the edge. It presents a library of highly efficient neuron architectures and a design framework, enabling the development of complex neural network accelerators with minimal Python code.
 
-# Project structure
-|	Component		|															Description																|
-|:-----------------:|:---------------------------------------------------------------------------------------------------------------------------------:|
-|	**spiker**		|	Python package to build, train, quantize and generate the VHDL description of hardware accelerators for Spiking Neural Networks	|
-|	**Tutorials**	|									Examples on how to use the different components of spiker										|
-|	**Doc**			|				Project documentation. It will be gradually filled with schematics, timing diagrams and similar						|
+## 📋 Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Tutorials](#tutorials)
+- [Citation](#citation)
+- [Acknowledgements](#acknowledgements)
 
+## 🔍 Overview
 
-# Requirements
+Spiker provides an end-to-end workflow for designing SNN hardware accelerators:
+1. Build and train SNN models using PyTorch and snnTorch
+2. Optimize network parameters for hardware efficiency
+3. Generate synthesizable VHDL code for FPGA implementation
+4. Validate functionality through simulation
 
-- numpy >= 1.20
-- torch >= 1.12
-- snntorch >= 0.9.1
-- tabulate >= 0.9.0
+## ⭐ Features
 
-# Installation
+- **Multiple Neuron Models**: Support for IF, LIF, Synaptic, RIF, RLIF, and RSynaptic neurons
+- **Flexible Network Configuration**: Easy specification of network architecture through dictionaries
+- **Hardware-Aware Optimization**: Parameters tuned for efficient FPGA implementation
+- **Automatic VHDL Generation**: From trained PyTorch models to synthesizable VHDL
+- **FPGA-Optimized**: Designed for resource-constrained edge devices
+- **Well-Documented**: Extensive documentation and tutorials
 
-From pip repositories
+## 📁 Project Structure
 
-    pip install spikerplus
+```
+Spiker/
+├── spiker/                 # Main Python package
+│   ├── __init__.py         # Package exports
+│   ├── setup.py            # Installation script
+│   └── spikerplus/         # Core implementation
+│       ├── __init__.py     # Module exports
+│       ├── net_builder.py  # SNN construction utilities
+│       ├── trainer.py      # Training framework
+│       ├── optimizer.py    # Optimization utilities
+│       ├── vhdl_generator.py # VHDL code generation
+│       ├── dataloaders/    # Data loading utilities
+│       └── vhdl/           # VHDL templates and components
+├── Tutorials/              # Jupyter notebooks and examples
+├── Doc/                    # Documentation files
+└── README.md               # This file
+```
 
-Or to install the last version from the repo
+## 🚀 Installation
 
-    git clone https://github.com/smilies-polito/Spiker.git
-    cd Spiker/spiker
-	pip install .
+### From PyPI (Recommended)
+```bash
+pip install spikerplus
+```
 
-or equivalently 
+### From Source
+```bash
+git clone https://github.com/smilies-polito/Spiker.git
+cd Spiker/spiker
+pip install .
+```
 
-    git clone https://github.com/smilies-polito/Spiker.git
-    cd Spiker/spiker
-	python setup.py install
+### Development Installation
+```bash
+git clone https://github.com/smilies-polito/Spiker.git
+cd Spiker/spiker
+pip install -e .
+```
 
-# Citation
+## 📖 Usage
 
-[Spiker+: a framework for the generation of efficient Spiking Neural Networks FPGA accelerators for inference at the edge](https://doi.org/10.1109/TETC.2024.3511676)
+### Basic SNN Creation
+```python
+from spikerplus.net_builder import NetBuilder
+import torch
 
-    @article{carpegna\_spiker\_2024,
-        title = {Spiker+: a framework for the generation of efficient Spiking Neural Networks FPGA accelerators for inference at the edge},
-        issn = {2168-6750},
-        shorttitle = {Spiker+},
-        url = {https://ieeexplore.ieee.org/document/10794606},
-        doi = {10.1109/TETC.2024.3511676},
-        urldate = {2025-02-05},
-        journal = {IEEE Transactions on Emerging Topics in Computing},
-        author = {Carpegna, Alessio and Savino, Alessandro and Carlo, Stefano Di},
-        year = {2024},
-        pages = {1--15},
+# Define network configuration
+net_dict = {
+    "n_cycles": 73,
+    "n_inputs": 40,
+    "layer_0": {
+        "neuron_model": "lif",
+        "n_neurons": 128,
+        "threshold": 1.0,
+        "beta": 0.9375,
+        "reset_mechanism": "subtract"
+    },
+    "layer_1": {
+        "neuron_model": "lif",
+        "n_neurons": 10,
+        "threshold": 1.0,
+        "beta": 0.9375,
+        "reset_mechanism": "none"
     }
+}
 
-You can find the very first version of spiker at:
+# Build the network
+net_builder = NetBuilder(net_dict)
+snn = net_builder.build()
 
-[Spiker: an FPGA-optimized Hardware accelerator for Spiking Neural Networks](https://doi.org/10.1109/ISVLSI54635.2022.00016)
+# Forward pass
+input_spikes = torch.randn(73, 32, 40)  # [time_steps, batch_size, n_inputs]
+output = snn(input_spikes)
+```
 
-    @inproceedings{carpegna\_spiker\_2022,
-        title = {Spiker: an FPGA-optimized Hardware accelerator for Spiking Neural Networks},
-        shorttitle = {Spiker},
-        url = {https://ieeexplore.ieee.org/document/9911998},
-        doi = {10.1109/ISVLSI54635.2022.00016},
-        urldate = {2025-02-05},
-        booktitle = {2022 {IEEE} {Computer} {Society} {Annual} {Symposium} on {VLSI} ({ISVLSI})},
-        author = {Carpegna, Alessio and Savino, Alessandro and Di Carlo, Stefano},
-        month = jul,
-        year = {2022},
-        pages = {14--19},
-    }
-    
+### Training
+```python
+from spikerplus.trainer import Trainer
 
-# Acknowledgements
+trainer = Trainer(snn, readout_type="mem")
+trainer.train(train_loader, val_loader, n_epochs=20)
+```
 
-[Neuropuls](https://neuropuls.eu/)
+### VHDL Generation
+```python
+from spikerplus.vhdl_generator import VhdlGenerator
 
-This project has received funding from the European Union’s Horizon Europe research and innovation programme under grant agreement No. 101070238. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them.
+optim_config = {
+    "neurons_bw": 16,
+    "fp_dec": 8,
+    "weights_bw": 8
+}
 
-The code in spiker/vhdl/vhdltools was modified starting from [rftafas/hdltools](https://github.com/rftafas/hdltools).
+vhdl_gen = VhdlGenerator(snn, optim_config)
+vhdl_code = vhdl_gen.generate(functional=True, interface=False)
+```
 
-I would like to thank Domenico Elia Sabella for their valuable assistance in revising and cleaning the final version of the code published on the open repository.
+## 🎥 Tutorials
+
+Comprehensive video tutorials are available on YouTube:
+[Spiker Tutorial Series](https://www.youtube.com/watch?v=y3OvFHBXrDE&list=PLkIAXI4vJ8EgfZki2WRh2Da_h-w6gKbsd)
+
+The tutorials cover:
+- Network definition and building
+- Training procedures
+- Hardware optimization
+- VHDL code generation
+- FPGA implementation
+
+## 📚 Citation
+
+If you use Spiker in your research, please cite:
+
+### Spiker+ (Latest Version)
+```bibtex
+@article{carpegna_spiker_2024,
+    title = {Spiker+: a framework for the generation of efficient Spiking Neural Networks FPGA accelerators for inference at the edge},
+    author = {Carpegna, Alessio and Savino, Alessandro and Di Carlo, Stefano},
+    journal = {IEEE Transactions on Emerging Topics in Computing},
+    year = {2024},
+    doi = {10.1109/TETC.2024.3511676}
+}
+```
+
+### Original Spiker
+```bibtex
+@inproceedings{carpegna_spiker_2022,
+    title = {Spiker: an FPGA-optimized Hardware accelerator for Spiking Neural Networks},
+    author = {Carpegna, Alessio and Savino, Alessandro and Di Carlo, Stefano},
+    booktitle = {2022 IEEE Computer Society Annual Symposium on VLSI (ISVLSI)},
+    pages = {14--19},
+    year = {2022},
+    doi = {10.1109/ISVLSI54635.2022.00016}
+}
+```
+
+## 🙏 Acknowledgements
+
+This project has received funding from the European Union’s Horizon Europe research and innovation programme under grant agreement No. 101070238. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them.
+
+Special thanks to:
+- [Neuropuls](https://neuropuls.eu/) for their support
+- Domenico Elia Sabella for valuable assistance in revising and cleaning the code
+- The developers of [rftafas/hdltools](https://github.com/rftafas/hdltools) whose code was adapted for the VHDL utilities
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

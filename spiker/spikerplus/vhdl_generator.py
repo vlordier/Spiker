@@ -5,139 +5,137 @@ import numpy as np
 from .vhdl.layer import Layer
 from .vhdl.network import Network, FullAccelerator
 
+
 class VhdlGenerator:
+    def __init__(self, net, optim_config):
 
-	def __init__(self, net, optim_config):
-		
-		self.net = net
-		self.optim_config = optim_config
+        self.net = net
+        self.optim_config = optim_config
 
-		self.input_size = self.input_size(list(self.net.layers)[0])
-		self.output_size = self.output_size(list(self.net.layers)[-2])
+        self.input_size = self.input_size(list(self.net.layers)[0])
+        self.output_size = self.output_size(list(self.net.layers)[-2])
 
-	def generate(self, functional = True, interface = False, debug = False):
+    def generate(self, functional=True, interface=False, debug=False):
 
-		vhdl_net = Network(self.net.n_cycles, debug = debug)
-		self.functional = functional
+        vhdl_net = Network(self.net.n_cycles, debug=debug)
+        self.functional = functional
 
-		for layer in self.net.layers:
+        for layer in self.net.layers:
+            if "fc" in layer:
+                ff_w = self.extract_weights(layer)
 
-			if "fc" in layer:
+            else:
+                vhdl_net.add(self.init_layer(layer, ff_w))
 
-				ff_w = self.extract_weights(layer)
+        if not interface:
+            return vhdl_net
 
-			else:
+        else:
+            return FullAccelerator(vhdl_net, self.input_size, self.output_size)
 
-				vhdl_net.add(self.init_layer(layer, ff_w))
+    def input_size(self, layer):
 
-		if not interface:
+        if "fc" in layer:
+            ff_w = self.extract_weights(layer)
 
-			return vhdl_net
+            return ff_w.shape[1]
 
-		else:
+        raise ValueError("Cannot compute size. I need a linear layer")
 
-			return FullAccelerator(vhdl_net, self.input_size,
-					self.output_size)
+    def output_size(self, layer):
 
+        if "fc" in layer:
+            ff_w = self.extract_weights(layer)
 
-	def input_size(self, layer):
+            return ff_w.shape[0]
 
-			if "fc" in layer:
+        raise ValueError("Cannot compute size. I need a linear layer")
 
-				ff_w = self.extract_weights(layer)
+    def init_layer(self, layer, ff_w):
 
-				return ff_w.shape[1]
+        th = np.repeat(self.extract_threshold(layer), ff_w.shape[0])
+        beta_shift = self.extract_beta(layer)
+        reset = self.extract_reset(layer)
+        fb_w = self.extract_weights(layer)
 
-			raise ValueError("Cannot compute size. I need a linear layer")
+        if not fb_w:
+            fb_w = torch.zeros((ff_w.shape[0], ff_w.shape[0])).numpy()
 
-	def output_size(self, layer):
+        return Layer(
+            label=layer,
+            w_exc=ff_w,
+            w_inh=fb_w,
+            v_th=th,
+            bitwidth=self.optim_config["neurons_bw"],
+            fp_decimals=self.optim_config["fp_dec"],
+            w_inh_bw=self.optim_config["weights_bw"],
+            w_exc_bw=self.optim_config["weights_bw"],
+            shift=beta_shift,
+            reset=reset,
+            functional=self.functional,
+        )
 
-			if "fc" in layer:
+    def extract_weights(self, layer):
 
-				ff_w = self.extract_weights(layer)
+        if "weight" in dir(self.net.layers[layer]):
+            return self.net.layers[layer].weight.data.cpu().numpy()
 
-				return ff_w.shape[0]
+        elif "recurrent" in dir(self.net.layers[layer]):
+            return self.net.layers[layer].recurrent.weight.data.cpu().numpy()
 
-			raise ValueError("Cannot compute size. I need a linear layer")
+    def extract_threshold(self, layer):
 
-	def init_layer(self, layer, ff_w):
+        if "threshold" in dir(self.net.layers[layer]):
+            return np.array([self.net.layers[layer].threshold.data.item()])
 
-		th = np.repeat(self.extract_threshold(layer), ff_w.shape[0]) 
-		beta_shift = self.extract_beta(layer)
-		reset = self.extract_reset(layer)
-		fb_w = self.extract_weights(layer)
+    def extract_reset(self, layer):
 
-		if not fb_w:
-			fb_w = torch.zeros((ff_w.shape[0], ff_w.shape[0])).numpy()
+        if "reset_mechanism" in dir(self.net.layers[layer]):
+            reset = self.net.layers[layer].reset_mechanism
 
-		return Layer(
-			label		= layer,
-			w_exc		= ff_w,
-			w_inh		= fb_w,
-			v_th		= th,
-			bitwidth	= self.optim_config["neurons_bw"],
-			fp_decimals	= self.optim_config["fp_dec"],
-			w_inh_bw	= self.optim_config["weights_bw"],
-			w_exc_bw	= self.optim_config["weights_bw"],
-			shift		= beta_shift,
-			reset		= reset,
-			functional	= self.functional
-		)
+            if reset == "subtract":
+                return "subtractive"
 
+            elif reset == "zero":
+                return "fixed"
 
-	def extract_weights(self, layer):
+            elif reset == "none":
+                return "none"
 
-		if "weight" in dir(self.net.layers[layer]):
+            else:
+                raise ValueError("Reset type not supported")
 
-			return self.net.layers[layer].weight.data.cpu().numpy()
+    def extract_alpha(self, layer: str) -> int:
 
-		elif "recurrent" in dir(self.net.layers[layer]):
+        if hasattr(self.net.layers[layer], "alpha"):
+            alpha = self.net.layers[layer].alpha.data.item()
 
-			return self.net.layers[layer].recurrent.weight.data.cpu().numpy()
+            if not isinstance(alpha, float):
+                raise ValueError("Alpha decay must be float")
 
+            if alpha < 0.0 or alpha > 1.0:
+                raise ValueError("Alpha decay must be between 0 and 1")
 
-	def extract_threshold(self, layer):
+            return self.pow2_shift(1 - alpha)
+        else:
+            raise ValueError("Layer does not have alpha attribute")
 
-		if "threshold" in dir(self.net.layers[layer]):
+    def extract_beta(self, layer: str) -> int:
 
-			return np.array([self.net.layers[layer].threshold.data.item()])
+        if hasattr(self.net.layers[layer], "beta"):
+            beta = self.net.layers[layer].beta.data.item()
 
-	def extract_reset(self, layer):
+            if not isinstance(beta, float):
+                raise ValueError("Beta decay must be float")
 
-		if "reset_mechanism" in dir(self.net.layers[layer]):
-			
-			reset = self.net.layers[layer].reset_mechanism
+            if beta < 0.0 or beta > 1.0:
+                raise ValueError("Beta decay must be between 0 and 1")
 
-			if reset == "subtract":
-				return "subtractive"
+            return self.pow2_shift(1 - beta)
+        else:
+            raise ValueError("Layer does not have beta attribute")
 
-			elif reset == "zero":
-				return "fixed"
-
-			elif reset == "none":
-				return "none"
-
-			else:
-				raise ValueError("Reset type not supported")
-
-
-	def extract_alpha(self, layer):
-
-		if "alpha" in dir(self.net.layers[layer]):
-
-			alpha = self.net.layers[layer].alpha.data.item()
-
-			return self.pow2_shift(1 - alpha)
-
-
-	def extract_beta(self, layer):
-
-		if "beta" in dir(self.net.layers[layer]):
-
-			beta = self.net.layers[layer].beta.data.item()
-
-			return self.pow2_shift(1 - beta)
-
-
-	def pow2_shift(self, value):
-		return int(abs(log2(value)))
+    def pow2_shift(self, value: float) -> int:
+        if value <= 0:
+            raise ValueError("Value must be positive for log2 calculation")
+        return int(round(log2(value)))
