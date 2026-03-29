@@ -2,7 +2,7 @@ import subprocess as sp
 from random import randint
 
 
-def createDir(dirName):
+def createDir(dirName: str) -> None:
     """Create a new directory. If it already exists it is firstly remove.
 
     INPUT:
@@ -23,8 +23,7 @@ def createDir(dirName):
     sp.run(cmdString, shell=True, executable="/bin/bash")
 
 
-def ceil_pow2(x):
-
+def ceil_pow2(x: int) -> int:
     power = 0
     go = True
 
@@ -38,16 +37,14 @@ def ceil_pow2(x):
     return 2**power
 
 
-def n_bytes(x):
-
+def n_bytes(x: int) -> int:
     if x == 0:
         return 1
 
     return int((x - 1) // 8) + 1
 
 
-def floor_pow2(x):
-
+def floor_pow2(x: int) -> int:
     power = 0
     go = True
 
@@ -61,8 +58,7 @@ def floor_pow2(x):
     return 2**power
 
 
-def random_binary(min_value=0, max_value=255, bitwidth=8):
-
+def random_binary(min_value: int = 0, max_value: int = 255, bitwidth: int = 8) -> str:
     if max_value > 2**bitwidth - 1 or min_value < 0:
         raise ValueError("Random number not representable on bitwidth\n")
 
@@ -71,16 +67,14 @@ def random_binary(min_value=0, max_value=255, bitwidth=8):
     return "{0:{fill}{width}{base}}".format(rand_int, fill=0, width=bitwidth, base="b")
 
 
-def int_to_bin(value, width=8, fill=0):
-
+def int_to_bin(value: int, width: int = 8, fill: int = 0) -> str:
     if value < 0:
         value = 2**width + value
 
     return "{0:{fill}{width}{base}}".format(value, fill=fill, width=width, base="b")
 
 
-def int_to_hex(value, width=8, fill=0):
-
+def int_to_hex(value: int, width: int = 8, fill: int = 0) -> str:
     if value < 0:
         value = 16**width + value
 
@@ -88,8 +82,11 @@ def int_to_hex(value, width=8, fill=0):
 
 
 def fixed_point_array(
-    numpyArray, bitwidth, fixed_point_decimals=0, conv_type="unsigned"
-):
+    numpyArray: "np.ndarray",
+    bitwidth: int,
+    fixed_point_decimals: int = 0,
+    conv_type: str = "unsigned",
+) -> "np.ndarray":
     """Convert a NumPy array into fixed point notation.
 
     INPUT:
