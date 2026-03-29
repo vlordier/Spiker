@@ -34,7 +34,7 @@ class AddrConverter(VHDLblock):
         # Add/sub process
         self.architecture.bodyCodeHeader.add(
             "addr_out <= std_logic_vector(unsigned(addr_in) + "
-            "to_unsigned(1, N));"
+            "to_unsigned(1, N));",
         )
 
         # Debug

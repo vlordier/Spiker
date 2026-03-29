@@ -11,7 +11,7 @@ from typing import Any
 
 import snntorch as snn
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .exceptions import LayerConfigError, NeuronModelError
 from .types import NeuronModel, ResetMechanism
@@ -172,13 +172,13 @@ class SNN(nn.Module):
                 self.syn_rec[layer] = []
                 self.spk_rec[layer] = []
 
-                if layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
+                if layer in {f"{_LAYER_IF}{idx}", f"{_LAYER_LIF}{idx}"}:
                     self.mem[layer] = self.layers[layer].reset_mem()
 
                 elif layer == f"{_LAYER_SYN}{idx}":
                     self.syn[layer], self.mem[layer] = self.layers[layer].reset_mem()
 
-                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
+                elif layer in {f"{_LAYER_RIF}{idx}", f"{_LAYER_RLIF}{idx}"}:
                     self.spk[layer], self.mem[layer] = self.layers[layer].reset_mem()
 
                 elif layer == f"{_LAYER_RSYN}{idx}":
@@ -249,7 +249,7 @@ class SNN(nn.Module):
                 "Input data have a time dimension different from "
                 "the network's number of steps. It's ok at this level, "
                 "but remember to use a suitable number of steps in the "
-                "vhdl generator"
+                "vhdl generator",
             )
 
         for step in range(input_spikes.shape[0]):
@@ -269,9 +269,10 @@ class SNN(nn.Module):
                         cur[layer] = self.layers[layer](self.spk[prev_layer])
                         prev_layer = layer
 
-                elif layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
+                elif layer in {f"{_LAYER_IF}{idx}", f"{_LAYER_LIF}{idx}"}:
                     self.spk[layer], self.mem[layer] = self.layers[layer](
-                        cur[prev_layer], self.mem[layer]
+                        cur[prev_layer],
+                        self.mem[layer],
                     )
                     prev_layer = layer
 
@@ -281,9 +282,11 @@ class SNN(nn.Module):
                     ](cur[prev_layer], self.syn[layer], self.mem[layer])
                     prev_layer = layer
 
-                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
+                elif layer in {f"{_LAYER_RIF}{idx}", f"{_LAYER_RLIF}{idx}"}:
                     self.spk[layer], self.mem[layer] = self.layers[layer](
-                        cur[prev_layer], self.spk[layer], self.mem[layer]
+                        cur[prev_layer],
+                        self.spk[layer],
+                        self.mem[layer],
                     )
                     prev_layer = layer
 
@@ -404,7 +407,9 @@ class NetBuilder:
         return allowed_keys
 
     def _parse_global_config(
-        self, net_dict: dict[str, Any], parsed_dict: dict[str, Any]
+        self,
+        net_dict: dict[str, Any],
+        parsed_dict: dict[str, Any],
     ) -> None:
         """Parse global network configuration parameters."""
         for key in net_dict:
@@ -419,7 +424,9 @@ class NetBuilder:
                 parsed_dict[key] = net_dict[key]
 
     def _parse_layer_config(
-        self, net_dict: dict[str, Any], parsed_dict: dict[str, Any]
+        self,
+        net_dict: dict[str, Any],
+        parsed_dict: dict[str, Any],
     ) -> None:
         """Parse layer configuration parameters."""
         for key in net_dict:
@@ -438,7 +445,9 @@ class NetBuilder:
                 self._parse_layer_beta(layer, parsed_dict[key])
 
     def _parse_layer_neurons(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse neuron count for a layer."""
         if "n_neurons" in layer:
@@ -451,7 +460,9 @@ class NetBuilder:
             parsed_layer["n_neurons"] = self.default_dict["layer_0"]["n_neurons"]
 
     def _parse_layer_model(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse neuron model for a layer."""
         if "neuron_model" in layer:
@@ -465,7 +476,9 @@ class NetBuilder:
             parsed_layer["neuron_model"] = self.default_dict["layer_0"]["neuron_model"]
 
     def _parse_layer_threshold(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse threshold configuration for a layer."""
         if "threshold" in layer:
@@ -489,7 +502,9 @@ class NetBuilder:
             ]
 
     def _parse_layer_reset(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse reset mechanism for a layer."""
         if "reset_mechanism" in layer:
@@ -505,7 +520,9 @@ class NetBuilder:
             ]
 
     def _parse_layer_alpha(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse alpha decay for a layer."""
         if self.has_alpha[parsed_layer["neuron_model"]]:
@@ -534,7 +551,9 @@ class NetBuilder:
                 ]
 
     def _parse_layer_beta(
-        self, layer: dict[str, Any], parsed_layer: dict[str, Any]
+        self,
+        layer: dict[str, Any],
+        parsed_layer: dict[str, Any],
     ) -> None:
         """Parse beta decay for a layer."""
         if self.has_beta[parsed_layer["neuron_model"]]:

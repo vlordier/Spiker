@@ -11,8 +11,8 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import torch
-import torch.nn as nn
 from tabulate import tabulate
+from torch import nn
 
 from .device import get_device
 from .net_builder import SNN, NetBuilder
@@ -57,7 +57,9 @@ class Quantizer:
         return self.saturated_int(quant, bitwidth)
 
     def saturated_int(
-        self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
+        self,
+        value: npt.NDArray[np.float64] | torch.Tensor | float,
+        bitwidth: int,
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
         """Apply saturated integer conversion.
 
@@ -72,7 +74,9 @@ class Quantizer:
         return self.saturate(self.to_int(value), bitwidth)
 
     def saturate(
-        self, value: npt.NDArray[np.float64] | torch.Tensor | float, bitwidth: int
+        self,
+        value: npt.NDArray[np.float64] | torch.Tensor | float,
+        bitwidth: int,
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
         """Saturate values to fit within bit-width limits.
 
@@ -99,7 +103,8 @@ class Quantizer:
         return float(value)
 
     def to_int(
-        self, value: npt.NDArray[np.float64] | torch.Tensor | float
+        self,
+        value: npt.NDArray[np.float64] | torch.Tensor | float,
     ) -> npt.NDArray[np.float64] | torch.Tensor | float:
         """Convert value to integer representation.
 
@@ -159,7 +164,7 @@ class QuantSNN(SNN):
                 "Input data have a time dimension different from "
                 "the network's number of steps. It's ok at this level, "
                 "but remember to use a suitable number of steps in the "
-                "vhdl generator"
+                "vhdl generator",
             )
 
         for step in range(input_spikes.shape[0]):
@@ -177,9 +182,10 @@ class QuantSNN(SNN):
                     else:
                         cur[layer] = self.layers[layer](self.spk[prev_layer])
 
-                elif layer == f"{_LAYER_IF}{idx}" or layer == f"{_LAYER_LIF}{idx}":
+                elif layer in {f"{_LAYER_IF}{idx}", f"{_LAYER_LIF}{idx}"}:
                     self.spk[layer], self.mem[layer] = self.layers[layer](
-                        cur[prev_layer], self.mem[layer]
+                        cur[prev_layer],
+                        self.mem[layer],
                     )
 
                 elif layer == f"{_LAYER_SYN}{idx}":
@@ -187,9 +193,11 @@ class QuantSNN(SNN):
                         layer
                     ](cur[prev_layer], self.syn[layer], self.mem[layer])
 
-                elif layer == f"{_LAYER_RIF}{idx}" or layer == f"{_LAYER_RLIF}{idx}":
+                elif layer in {f"{_LAYER_RIF}{idx}", f"{_LAYER_RLIF}{idx}"}:
                     self.spk[layer], self.mem[layer] = self.layers[layer](
-                        cur[prev_layer], self.spk[layer], self.mem[layer]
+                        cur[prev_layer],
+                        self.spk[layer],
+                        self.mem[layer],
                     )
 
                 elif layer == f"{_LAYER_RSYN}{idx}":
@@ -219,12 +227,14 @@ class QuantSNN(SNN):
         """
         if "fc" not in layer:
             self.mem[layer] = self.quantizer.saturated_int(
-                self.mem[layer], self.neurons_bw
+                self.mem[layer],
+                self.neurons_bw,
             )
 
             if "syn" in layer:
                 self.syn[layer] = self.quantizer.saturated_int(
-                    self.syn[layer], self.neurons_bw
+                    self.syn[layer],
+                    self.neurons_bw,
                 )
 
 
@@ -319,7 +329,8 @@ class Optimizer:
         return self._trainer.evaluate(dataloader)
 
     def parse_opt_config(
-        self, optim_config: dict[str, Any]
+        self,
+        optim_config: dict[str, Any],
     ) -> dict[str, dict[str, int]]:
         """Parse optimization configuration.
 
@@ -393,7 +404,7 @@ class Optimizer:
                             str(w_bw),
                             str(loss),
                             f"{acc * 100:.2f}%",
-                        ]
+                        ],
                     )
 
         table_str = "\n" + tabulate(table, headers=headers, tablefmt="grid")
@@ -416,12 +427,16 @@ class Optimizer:
         for key in quant_state_dict:
             if "weight" in key:
                 quant_state_dict[key] = self.quantizer.fixed_point(
-                    quant_state_dict[key], fp_dec, weights_bw
+                    quant_state_dict[key],
+                    fp_dec,
+                    weights_bw,
                 )
 
             elif "threshold" in key:
                 quant_state_dict[key] = self.quantizer.fixed_point(
-                    quant_state_dict[key], fp_dec, neurons_bw
+                    quant_state_dict[key],
+                    fp_dec,
+                    neurons_bw,
                 )
 
         self.net.load_state_dict(quant_state_dict)

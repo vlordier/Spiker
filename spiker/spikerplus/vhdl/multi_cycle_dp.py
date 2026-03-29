@@ -128,7 +128,7 @@ class MultiCycleDP_tb(Testbench):
         self.dut = MultiCycleDP(
             n_cycles = n_cycles,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -140,7 +140,7 @@ class MultiCycleDP_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(clock_period = clock_period, file_output = file_output)

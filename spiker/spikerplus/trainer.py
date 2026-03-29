@@ -9,8 +9,8 @@ import os
 import time
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as fn
+from torch import nn
 from torch.utils.data import DataLoader
 
 from .device import get_device
@@ -61,7 +61,9 @@ class Trainer:
             lr: float = 5e-4
 
             self.optimizer: torch.optim.Optimizer = torch.optim.Adam(
-                self.net.parameters(), lr=lr, betas=(adam_beta1, adam_beta2)
+                self.net.parameters(),
+                lr=lr,
+                betas=(adam_beta1, adam_beta2),
             )
         else:
             self.optimizer = optimizer
@@ -90,6 +92,7 @@ class Trainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         n_epochs: int = 20,
+        *,
         store: bool = False,
         output_dir: str = "Trained",
     ) -> None:
@@ -270,6 +273,7 @@ class Trainer:
         val_loss: torch.Tensor,
         train_acc: torch.Tensor,
         val_acc: torch.Tensor,
+        *,
         start_time: float | None = None,
     ) -> None:
         """Log training progress.
@@ -372,11 +376,19 @@ if __name__ == "__main__":
     train_set, test_set = random_split(dataset, [train_size, test_size])
 
     train_loader = DataLoader(
-        train_set, batch_size=batch_size, shuffle=True, num_workers=4, drop_last=True
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
+        drop_last=True,
     )
 
     test_loader = DataLoader(
-        test_set, batch_size=batch_size, shuffle=True, num_workers=4, drop_last=True
+        test_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
+        drop_last=True,
     )
 
     net_builder = NetBuilder(net_dict)

@@ -20,6 +20,7 @@ class MnistDL:
     def __init__(
         self,
         data_dir: str | Path,
+        *,
         transform: Callable | str = "default",
         download: bool = True,
         image_width: int = 28,
@@ -50,7 +51,7 @@ class MnistDL:
                     transforms.ToTensor(),
                     transforms.Normalize((0,), (1,)),
                     self.spike_transform,
-                ]
+                ],
             )
         else:
             self.transform = transform
@@ -58,15 +59,22 @@ class MnistDL:
         self.num_cpu_cores: int | None = os.cpu_count()
 
         self.train_set = datasets.MNIST(
-            root=data_dir, train=True, download=download, transform=self.transform
+            root=data_dir,
+            train=True,
+            download=download,
+            transform=self.transform,
         )
 
         self.test_set = datasets.MNIST(
-            root=data_dir, train=False, download=download, transform=self.transform
+            root=data_dir,
+            train=False,
+            download=download,
+            transform=self.transform,
         )
 
     def load(
         self,
+        *,
         train_drop_last: bool = True,
         train_shuffle: bool = True,
         test_drop_last: bool = True,

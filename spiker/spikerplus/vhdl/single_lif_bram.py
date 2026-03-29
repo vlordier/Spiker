@@ -53,17 +53,17 @@ class SingleLifBram(VHDLblock):
         self.exc_mem = Rom(
             init_array  = w_exc_array,
             bitwidth    = w_exc_bw,
-            name_term   = "_exc"
+            name_term   = "_exc",
         )
 
         self.inh_mem = Rom(
             init_array  = w_inh_array,
             bitwidth    = w_inh_bw,
-            name_term   = "_inh"
+            name_term   = "_inh",
         )
 
         self.addr_converter = AddrConverter(
-            bitwidth    = self.exc_cnt_bitwidth
+            bitwidth    = self.exc_cnt_bitwidth,
         )
 
         self.components = sub_components(self)
@@ -254,14 +254,14 @@ class SingleLifBram(VHDLblock):
             name        = "exc_addr",
             signal_type = "std_logic_vector("
                         "exc_cnt_bitwidth - 1 "
-                        "downto 0)"
+                        "downto 0)",
         )
 
         self.architecture.signal.add(
             name        = "inh_addr",
             signal_type = "std_logic_vector("
                         "inh_cnt_bitwidth - 1 "
-                        "downto 0)"
+                        "downto 0)",
         )
 
         # Components
@@ -374,7 +374,7 @@ class SingleLifBram_tb(Testbench):
             n_inh_inputs = self.n_inh_inputs,
             n_cycles = self.n_cycles,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -386,7 +386,7 @@ class SingleLifBram_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(
@@ -395,7 +395,7 @@ class SingleLifBram_tb(Testbench):
             output_dir      = output_dir,
             file_input      = file_input,
             input_dir       = input_dir,
-            input_signal_list   = input_signal_list
+            input_signal_list   = input_signal_list,
             )
 
 
@@ -478,7 +478,7 @@ if __name__ == "__main__":
         file_input = True,
         input_signal_list = [
             "exc_spikes",
-            "inh_spikes"
+            "inh_spikes",
         ],
         debug = True,
         debug_list = [
@@ -486,8 +486,8 @@ if __name__ == "__main__":
             "single_lif_bram_exc_weight",
             "multi_input_lif_exc_spike",
             "neuron_cu_present_state",
-            "neuron_datapath_v"
-        ]
+            "neuron_datapath_v",
+        ],
     )
 
     print(tb.components)

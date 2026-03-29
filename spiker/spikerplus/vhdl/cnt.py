@@ -49,7 +49,7 @@ class Cnt(VHDLblock):
         self.architecture.processes["count"].variables.add(
                 name = "cnt_var",
                 var_type = "integer",
-                value = "0"
+                value = "0",
         )
 
         en_if = If()

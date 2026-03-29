@@ -62,7 +62,7 @@ class Rom(VHDLblock):
             self.init_array,
             self.bitwidth,
             self.fp_decimals,
-            "signed"
+            "signed",
         )
 
         rows = []
@@ -98,13 +98,13 @@ class Rom(VHDLblock):
         self.entity.port.add(
             name        = "clka",
             direction   = "in",
-            port_type   = "std_logic"
+            port_type   = "std_logic",
         )
         self.entity.port.add(
             name        = "addra",
             direction   = "in",
             port_type   = "std_logic_vector(" +
-                    str(self.addr_width-1)  + " downto 0)"
+                    str(self.addr_width-1)  + " downto 0)",
         )
 
         for i in range(self.rom_columns):
@@ -121,14 +121,14 @@ class Rom(VHDLblock):
                 direction   = "out",
                 port_type   = "std_logic_vector(" +
                         str(self.bitwidth-1) +
-                        " downto 0)"
+                        " downto 0)",
             )
 
         self.architecture.signal.add(
             name    = "douta",
             signal_type = "std_logic_vector(" +
             str(self.bitwidth*self.rom_columns-1)
-            + " downto 0)"
+            + " downto 0)",
         )
 
         for i in range(self.rom_columns):
@@ -178,13 +178,13 @@ class Rom(VHDLblock):
         self.rom_ip.entity.port.add(
             name        = "clka",
             direction   = "in",
-            port_type   = "std_logic"
+            port_type   = "std_logic",
         )
         self.rom_ip.entity.port.add(
             name        = "addra",
             direction   = "in",
             port_type   = "std_logic_vector(" +
-                    str(self.addr_width - 1) + " downto 0)"
+                    str(self.addr_width - 1) + " downto 0)",
         )
 
         self.rom_ip.entity.port.add(
@@ -192,7 +192,7 @@ class Rom(VHDLblock):
             direction   = "out",
             port_type   = "std_logic_vector(" +
             str(self.bitwidth*self.rom_columns-1)
-            + " downto 0)"
+            + " downto 0)",
         )
 
         self.rom_ip.architecture.customTypes.add(
@@ -201,7 +201,7 @@ class Rom(VHDLblock):
             "0 to " + str(self.rom_rows),
             "std_logic_vector(" +
             str(self.rom_columns*self.bitwidth-1)
-            + " downto 0)"
+            + " downto 0)",
         )
 
         self.rom_ip.architecture.constant.add("mem", "rom_type",

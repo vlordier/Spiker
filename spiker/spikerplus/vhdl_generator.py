@@ -37,7 +37,7 @@ class VhdlGenerator:
         self.output_size: int = self.output_size(list(self.net.layers)[-2])
 
     def generate(
-        self, functional: bool = True, interface: bool = False, debug: bool = False
+        self, functional: bool = True, interface: bool = False, debug: bool = False,
     ) -> Network | FullAccelerator:
         """Generate VHDL code for the network.
 

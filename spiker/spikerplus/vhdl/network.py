@@ -43,7 +43,7 @@ class Network(VHDLblock, dict):
         self.multi_cycle = MultiCycle(
             n_cycles = self.n_cycles,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -112,21 +112,21 @@ class Network(VHDLblock, dict):
 
         self.architecture.signal.add(
             name        = "start_all",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.signal.add(
             name        = "all_ready",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.signal.add(
             name        = "restart",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.bodyCodeHeader.add(
-            "sample <= start_all;"
+            "sample <= start_all;",
         )
 
         # Multi-input control
@@ -166,13 +166,13 @@ class Network(VHDLblock, dict):
         # Add the ready signal for the layer
         self.architecture.signal.add(
             name        = layer_ready,
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.signal.add(
             name        = current_layer + "_feedback",
             signal_type = "std_logic_vector(" +
-                    str(layer.n_neurons-1)  + " downto 0)"
+                    str(layer.n_neurons-1)  + " downto 0)",
         )
 
         # Instantiate the layer
@@ -196,14 +196,14 @@ class Network(VHDLblock, dict):
                 name        = "in_spikes",
                 direction   = "in",
                 port_type   = "std_logic_vector(" +
-                str(layer.n_exc_inputs-1)  + " downto 0)"
+                str(layer.n_exc_inputs-1)  + " downto 0)",
             )
 
             self.entity.port.add(
                 name        = "out_spikes",
                 direction   = "out",
                 port_type   = "std_logic_vector(" +
-                str(layer.n_neurons-1)  + " downto 0)"
+                str(layer.n_neurons-1)  + " downto 0)",
             )
 
             self.architecture.instances[current_layer].p_map.add(
@@ -234,13 +234,13 @@ class Network(VHDLblock, dict):
 
                             port.port_type = port.port_type.replace(
                                     generic.name,
-                                    generic.value
+                                    generic.value,
                             )
 
                     self.entity.port.add(
                         name        = port.name,
                         direction   = port.direction,
-                        port_type   = port.port_type
+                        port_type   = port.port_type,
                     )
 
 
@@ -253,7 +253,7 @@ class Network(VHDLblock, dict):
                 name        = exc_spikes_internal,
                 signal_type = "std_logic_vector(" +
                         str(layer.n_exc_inputs - 1) +
-                        " downto 0)"
+                        " downto 0)",
             )
 
             self.architecture.instances[current_layer].p_map.add(
@@ -317,7 +317,7 @@ class Network_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(
@@ -326,7 +326,7 @@ class Network_tb(Testbench):
             output_dir      = output_dir,
             file_input      = file_input,
             input_dir       = input_dir,
-            input_signal_list   = input_signal_list
+            input_signal_list   = input_signal_list,
             )
 
 
@@ -409,7 +409,7 @@ class FullAccelerator(VHDLblock):
         self.out_addr_bw = int(log2(ceil_pow2(self.output_size)))
 
         self.input_decoder = Decoder(
-            bitwidth = self.in_addr_bw
+            bitwidth = self.in_addr_bw,
         )
 
         self.output_mux = Mux(
@@ -444,7 +444,7 @@ class FullAccelerator(VHDLblock):
                 gen_type    = self.net.entity.generic[
                         name].gen_type,
                 value       = self.net.entity.generic[
-                        name].value
+                        name].value,
             )
 
         for name in self.net.entity.port:
@@ -456,33 +456,33 @@ class FullAccelerator(VHDLblock):
                     direction   = self.net.entity.port[
                             name].direction,
                     port_type   = self.net.entity.port[
-                            name].port_type
+                            name].port_type,
                 )
 
         self.entity.port.add(
             name        = "in_spike",
             direction   = "in",
-            port_type   = "std_logic"
+            port_type   = "std_logic",
         )
 
         self.entity.port.add(
             name        = "in_spike_addr",
             direction   = "in",
             port_type   = "std_logic_vector(" +
-                    str(self.in_addr_bw - 1) + " downto 0)"
+                    str(self.in_addr_bw - 1) + " downto 0)",
         )
 
         self.entity.port.add(
             name        = "out_spike",
             direction   = "out",
-            port_type   = "std_logic"
+            port_type   = "std_logic",
         )
 
         self.entity.port.add(
             name        = "out_spike_addr",
             direction   = "in",
             port_type   = "std_logic_vector(" +
-                    str(self.out_addr_bw - 1) + " downto 0)"
+                    str(self.out_addr_bw - 1) + " downto 0)",
         )
 
         self.architecture.component.add(self.net)
@@ -494,21 +494,21 @@ class FullAccelerator(VHDLblock):
             name        = "en",
             signal_type = "std_logic_vector(" +
                     str(2**self.in_addr_bw-1)
-                    + " downto 0)"
+                    + " downto 0)",
         )
 
         self.architecture.signal.add(
             name        = "in_spikes",
             signal_type = "std_logic_vector(" +
                     str(2**self.in_addr_bw-1)
-                    + " downto 0)"
+                    + " downto 0)",
         )
 
         self.architecture.signal.add(
             name        = "out_spikes",
             signal_type = "std_logic_vector(" +
                     str(self.output_size-1)
-                    + " downto 0)"
+                    + " downto 0)",
         )
 
         ff_instance = Instance(self.ff, "spike_reg_i")
@@ -522,7 +522,7 @@ class FullAccelerator(VHDLblock):
             name        = "spikes",
             start       = 0,
             stop        = self.input_size-1,
-            loop_type   = "generate"
+            loop_type   = "generate",
         )
 
         spikes_sample.body.add(ff_instance)
@@ -535,7 +535,7 @@ class FullAccelerator(VHDLblock):
             **{"bitwidth"   : str(self.in_addr_bw)})
         self.architecture.instances["input_decoder"].port_map("key", **{
             "encoded_in"    : "in_spike_addr",
-            "decoded_out"   : "en"}
+            "decoded_out"   : "en"},
         )
 
         self.architecture.instances.add(self.output_mux,
@@ -544,28 +544,28 @@ class FullAccelerator(VHDLblock):
 
         if self.output_size > 2:
             self.architecture.instances["output_mux"].p_map.add(
-                "mux_sel", "out_spike_addr"
+                "mux_sel", "out_spike_addr",
             )
 
         elif self.output_size <= 2:
             self.architecture.instances["output_mux"].p_map.add(
-                "mux_sel", "out_spike_addr(0)"
+                "mux_sel", "out_spike_addr(0)",
             )
 
         for i in range(self.output_size):
             self.architecture.instances["output_mux"].p_map.add(
-                "in" + str(i), "out_spikes(" + str(i) + ")"
+                "in" + str(i), "out_spikes(" + str(i) + ")",
             )
 
         if self.output_size < 2**self.out_addr_bw:
             for i in range(self.output_size,
             2**self.out_addr_bw):
                 self.architecture.instances["output_mux"].p_map.add(
-                    "in" + str(i), "\'0\'"
+                    "in" + str(i), "\'0\'",
                 )
 
         self.architecture.instances["output_mux"].p_map.add(
-            "mux_out", "out_spike"
+            "mux_out", "out_spike",
         )
 
         self.architecture.instances.add(self.net,
@@ -576,7 +576,7 @@ class FullAccelerator(VHDLblock):
         if self.input_size < 2**self.in_addr_bw:
             self.architecture.instances["snn"].p_map.add(
                 "in_spikes", "in_spikes(" +
-                str(self.input_size-1)  + " downto 0)"
+                str(self.input_size-1)  + " downto 0)",
             )
 
 
@@ -600,7 +600,7 @@ class FullAccelerator_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(
@@ -609,7 +609,7 @@ class FullAccelerator_tb(Testbench):
             output_dir      = output_dir,
             file_input      = file_input,
             input_dir       = input_dir,
-            input_signal_list   = input_signal_list
+            input_signal_list   = input_signal_list,
             )
 
 
@@ -673,7 +673,7 @@ class NetworkSimulator:
         self.supported_readouts = [
             "mem_softmax",
             "mem_max",
-            "mem_avg"
+            "mem_avg",
         ]
 
         if readout_type in self.supported_readouts:
@@ -688,7 +688,7 @@ class NetworkSimulator:
             output_dir          = output_dir,
             file_output         = True,
             file_input          = True,
-            input_signal_list   = ["in_spikes"]
+            input_signal_list   = ["in_spikes"],
         )
 
         self.output_dir = output_dir
@@ -702,7 +702,7 @@ class NetworkSimulator:
             ]
 
             self.testbench.architecture.bodyCodeHeader.add(
-                    "neuron_dp_none_v_w_en <= sample;"
+                    "neuron_dp_none_v_w_en <= sample;",
             )
 
         write_vhdl(self.testbench)

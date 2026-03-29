@@ -41,36 +41,36 @@ class AddSub(VHDLblock):
             self.architecture.constant.add(
                 name        = "sat_up",
                 const_type  = "integer",
-                value       = "2**(N-1)-1"
+                value       = "2**(N-1)-1",
             )
 
             self.architecture.constant.add(
                 name        = "sat_down",
                 const_type  = "integer",
-                value       = "-2**(N-1)"
+                value       = "-2**(N-1)",
             )
 
             self.architecture.signal.add(
                 name        = "local_in0",
-                signal_type = "signed(N downto 0)"
+                signal_type = "signed(N downto 0)",
             )
 
             self.architecture.signal.add(
                 name        = "local_in1",
-                signal_type = "signed(N downto 0)"
+                signal_type = "signed(N downto 0)",
             )
 
             self.architecture.signal.add(
                 name        = "local_out",
-                signal_type = "signed(N downto 0)"
+                signal_type = "signed(N downto 0)",
             )
 
             # Extended inputs
             self.architecture.bodyCodeHeader.add(
-                "local_in0 <= in0(N-1) & in0;"
+                "local_in0 <= in0(N-1) & in0;",
             )
             self.architecture.bodyCodeHeader.add(
-                "local_in1 <= in1(N-1) & in1;"
+                "local_in1 <= in1(N-1) & in1;",
             )
 
             # Add/sub

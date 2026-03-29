@@ -22,12 +22,12 @@ class MultiCycle(VHDLblock):
         self.datapath = MultiCycleDP(
             n_cycles = n_cycles,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.control_unit = MultiCycleCU(
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)

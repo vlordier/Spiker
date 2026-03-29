@@ -29,7 +29,7 @@ class FileList(dict):
             name        = name,
             file_type   = file_type,
             mode        = mode,
-            filename    = filename
+            filename    = filename,
         )
 
     def code(self, indent_level : int = 0) -> str:

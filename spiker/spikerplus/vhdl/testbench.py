@@ -21,7 +21,7 @@ class Testbench(VHDLblock):
             output_dir      = output_dir,
             file_input      = file_input,
             input_dir       = input_dir,
-            input_signal_list   = input_signal_list
+            input_signal_list   = input_signal_list,
         )
 
         self.components = sub_components(self)
@@ -41,7 +41,7 @@ class Testbench(VHDLblock):
                 self.architecture.constant.add(
                     self.dut.entity.generic[name].name,
                     self.dut.entity.generic[name].gen_type,
-                    self.dut.entity.generic[name].value
+                    self.dut.entity.generic[name].value,
                 )
             else:
                 value = input("Choose a value for testbench "
@@ -51,7 +51,7 @@ class Testbench(VHDLblock):
                 self.architecture.constant.add(
                     self.dut.entity.generic[name].name,
                     self.dut.entity.generic[name].gen_type,
-                    value
+                    value,
                 )
 
 
@@ -59,7 +59,7 @@ class Testbench(VHDLblock):
             self.architecture.signal.add(
                 self.dut.entity.port[name].name,
                 self.dut.entity.port[name].port_type,
-                self.dut.entity.port[name].value
+                self.dut.entity.port[name].value,
             )
 
         self.architecture.component.add(self.dut)
@@ -118,7 +118,7 @@ class Testbench(VHDLblock):
             clk_name = "clk"
             self.architecture.signal.add(
                 name = clk_name,
-                signal_type = "std_logic"
+                signal_type = "std_logic",
             )
             self.architecture.processes.add(clk_name + "_gen")
             self.architecture.processes[clk_name + "_gen"].\
@@ -147,12 +147,12 @@ class Testbench(VHDLblock):
         self.architecture.constant.add(
             name = out_filename,
             const_type = "string",
-            value = "\"" + signal_name + ".txt\""
+            value = "\"" + signal_name + ".txt\"",
         )
 
         self.architecture.signal.add(
             name = en_name,
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.processes.add(en_gen, final_wait = True)
@@ -171,7 +171,7 @@ class Testbench(VHDLblock):
         self.architecture.processes[process_name].\
              variables.add(
              name       = "row",
-             var_type       = "line"
+             var_type       = "line",
         )
 
         self.architecture.processes[process_name].\
@@ -179,7 +179,7 @@ class Testbench(VHDLblock):
             name        = out_file,
             file_type   = "text",
             mode        = "write_mode",
-            filename    = out_filename
+            filename    = out_filename,
         )
 
         w_en_if = If()
@@ -220,7 +220,7 @@ class Testbench(VHDLblock):
             clk_name = "clk"
             self.architecture.signal.add(
                 name = clk_name,
-                signal_type = "std_logic"
+                signal_type = "std_logic",
             )
             self.architecture.processes.add(clk_name + "_gen")
             self.architecture.processes[clk_name + "_gen"].\
@@ -254,19 +254,19 @@ class Testbench(VHDLblock):
                 name = in_filename,
                 const_type = "string",
                 value = "\"" + input_dir + "/" + signal_name + \
-                    ".txt\""
+                    ".txt\"",
             )
 
         else:
             self.architecture.constant.add(
                 name = in_filename,
                 const_type = "string",
-                value = "\"" + signal_name + ".txt\""
+                value = "\"" + signal_name + ".txt\"",
             )
 
         self.architecture.signal.add(
             name = en_name,
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.processes.add(en_gen, final_wait = True)
@@ -285,14 +285,14 @@ class Testbench(VHDLblock):
         self.architecture.processes[process_name].\
              variables.add(
              name       = "row",
-             var_type       = "line"
+             var_type       = "line",
         )
 
         self.architecture.processes[process_name].\
              variables.add(
              name       = "read_var",
              var_type       = self.architecture.
-                        signal[signal_name].signal_type
+                        signal[signal_name].signal_type,
         )
 
         self.architecture.processes[process_name].\
@@ -300,7 +300,7 @@ class Testbench(VHDLblock):
             name        = in_file,
             file_type   = "text",
             mode        = "read_mode",
-            filename    = in_filename
+            filename    = in_filename,
         )
 
         rd_en_if = If()

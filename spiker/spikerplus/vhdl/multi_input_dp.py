@@ -31,7 +31,7 @@ class MultiInputDP(VHDLblock):
             bitwidth = n_exc_inputs,
             reg_type = "std_logic_vector",
             rst = "sync",
-            active = "low"
+            active = "low",
         )
 
         if ceil_pow2(n_exc_inputs) == ceil_pow2(n_inh_inputs):
@@ -48,7 +48,7 @@ class MultiInputDP(VHDLblock):
         self.cmp = Cmp(
             bitwidth = self.exc_cnt_bitwidth,
             cmp_type = "eq",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.components = sub_components(self)
@@ -459,7 +459,7 @@ class MultiCycleDP_tb(Testbench):
 
         self.dut = MultiCycleDP(
             n_exc_inputs    = n_exc_inputs,
-            n_inh_inputs    = n_inh_inputs
+            n_inh_inputs    = n_inh_inputs,
         )
 
         self.components = sub_components(self)
@@ -471,7 +471,7 @@ class MultiCycleDP_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(clock_period = clock_period, file_output =

@@ -23,7 +23,7 @@ class Barrier(VHDLblock):
             rst     = "sync",
             active      = "low",
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         self.components = sub_components(self)
@@ -45,7 +45,7 @@ class Barrier(VHDLblock):
         self.entity.generic.add(
                 name        = "N",
                 gen_type    = "integer",
-                value       = str(self.bitwidth)
+                value       = str(self.bitwidth),
         )
 
 

@@ -51,7 +51,7 @@ class MapList(dict):
 
                 print(
                     "Elements to map: " + str(self.elements_list) + "\nElements"
-                    " mapped: " + str(mapped) + "\n"
+                    " mapped: " + str(mapped) + "\n",
                 )
                 raise ValueError("Wrong number of elements in signals mapping")
 
@@ -104,7 +104,7 @@ class MapList(dict):
 
             elif hasattr(source, "name"):
                 self[target_name + conn_range] = MapObj(
-                    target_name, source.name, conn_range
+                    target_name, source.name, conn_range,
                 )
 
             else:

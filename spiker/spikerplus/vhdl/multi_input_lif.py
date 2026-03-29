@@ -35,7 +35,7 @@ class MultiInputLIF(VHDLblock):
             n_exc_inputs = n_exc_inputs,
             n_inh_inputs = n_inh_inputs,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.lif_neuron = LIFneuron(
@@ -44,7 +44,7 @@ class MultiInputLIF(VHDLblock):
             w_exc_bw = w_exc_bw,
             shift = shift,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -315,7 +315,7 @@ class MultiInputLIF_tb(Testbench):
             n_exc_inputs = n_exc_inputs,
             n_inh_inputs = n_inh_inputs,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -327,7 +327,7 @@ class MultiInputLIF_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(clock_period = clock_period, file_output = file_output)
@@ -412,7 +412,7 @@ class MultiInputLIF_tb(Testbench):
         self.architecture.processes["exc_spikes_gen"].variables.add(
                 name        = "exc_value",
                 var_type    = "integer",
-                value       = "0"
+                value       = "0",
         )
         self.architecture.processes["exc_spikes_gen"].if_list.add()
         self.architecture.processes["exc_spikes_gen"].if_list[0].\
@@ -447,7 +447,7 @@ class MultiInputLIF_tb(Testbench):
         self.architecture.processes["inh_spikes_gen"].variables.add(
                 name        = "inh_value",
                 var_type    = "integer",
-                value       = "0"
+                value       = "0",
         )
         self.architecture.processes["inh_spikes_gen"].if_list.add()
         self.architecture.processes["inh_spikes_gen"].if_list[0].\

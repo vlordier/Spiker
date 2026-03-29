@@ -26,25 +26,25 @@ class AndMask(VHDLblock):
         self.entity.generic.add(
             name        = "N",
             gen_type    = "integer",
-            value       = 8
+            value       = 8,
         )
 
         self.entity.port.add(
             name        = "input_bits",
             direction   = "in",
-            port_type   = self.data_type + "(N-1 downto 0)"
+            port_type   = self.data_type + "(N-1 downto 0)",
         )
 
         self.entity.port.add(
             name        = "mask_bit",
             direction   = "in",
-            port_type   = "std_logic"
+            port_type   = "std_logic",
         )
 
         self.entity.port.add(
             name        = "output_bits",
             direction   = "out",
-            port_type   = self.data_type + "(N-1 downto 0)"
+            port_type   = self.data_type + "(N-1 downto 0)",
         )
 
         self.architecture.processes.add("mask")
@@ -55,7 +55,7 @@ class AndMask(VHDLblock):
 
         self.architecture.processes["mask"].for_list.add(
             start       = 0,
-            stop        = "N-1"
+            stop        = "N-1",
         )
         self.architecture.processes["mask"].for_list[0].body.add(
             "output_bits(i) <= input_bits(i) and mask_bit;")

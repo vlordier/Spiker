@@ -37,11 +37,11 @@ class Decoder(VHDLblock):
         self.architecture.processes["decode"].sensitivity_list.add(
                 "encoded_in")
         self.architecture.processes["decode"].bodyHeader.add(
-            "decoded_out <= (others => \'0\');"
+            "decoded_out <= (others => \'0\');",
         )
         self.architecture.processes["decode"].bodyHeader.add(
                 "decoded_out(to_integer(unsigned(encoded_in)))"
-                " <= \'1\';"
+                " <= \'1\';",
         )
 
         # Debug

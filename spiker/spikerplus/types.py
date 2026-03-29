@@ -148,12 +148,12 @@ class LayerConfig:
         return cls(
             n_neurons=data.get("n_neurons", cls.n_neurons),
             neuron_model=NeuronModel.from_string(
-                data.get("neuron_model", cls.neuron_model.value)
+                data.get("neuron_model", cls.neuron_model.value),
             ),
             threshold=data.get("threshold", cls.threshold),
             learn_threshold=data.get("learn_threshold", cls.learn_threshold),
             reset_mechanism=ResetMechanism.from_string(
-                data.get("reset_mechanism", cls.reset_mechanism.value)
+                data.get("reset_mechanism", cls.reset_mechanism.value),
             ),
             alpha=data.get("alpha", cls.alpha),
             learn_alpha=data.get("learn_alpha", cls.learn_alpha),
@@ -302,7 +302,7 @@ class TrainingConfig:
         return cls(
             n_epochs=data.get("n_epochs", cls.n_epochs),
             readout_type=ReadoutType.from_string(
-                data.get("readout_type", cls.readout_type.value)
+                data.get("readout_type", cls.readout_type.value),
             ),
             learning_rate=data.get("learning_rate", cls.learning_rate),
             adam_beta1=data.get("adam_beta1", cls.adam_beta1),

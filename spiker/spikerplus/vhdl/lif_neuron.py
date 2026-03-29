@@ -16,7 +16,7 @@ class LIFneuron(VHDLblock):
         self.reset_types = [
             "fixed",
             "subtractive",
-            "none"
+            "none",
         ]
 
         if reset not in self.reset_types:
@@ -35,13 +35,13 @@ class LIFneuron(VHDLblock):
             shift       = shift,
             reset       = reset,
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         self.control_unit = LIFneuronCU(
             reset       = reset,
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         self.and_mask = AndMask(data_type = "signed")
@@ -335,7 +335,7 @@ class LIFneuron_tb(Testbench):
             shift = shift,
             reset = reset,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -347,7 +347,7 @@ class LIFneuron_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(clock_period = clock_period, file_output = file_output)

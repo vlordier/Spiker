@@ -7,7 +7,7 @@ from .vhdltools.vhdl_block import VHDLblock
 
 class Mux(VHDLblock):
     def __init__(
-        self, n_in=8, in_type="std_logic_vector", bitwidth=4, debug=True, debug_list=[]
+        self, n_in=8, in_type="std_logic_vector", bitwidth=4, debug=True, debug_list=[],
     ):
 
         # Name
@@ -95,13 +95,13 @@ class Mux(VHDLblock):
             sel_value = (
                 quote
                 + "{0:{fill}{width}{base}}".format(
-                    port_number, fill=0, width=self.n_sel, base="b"
+                    port_number, fill=0, width=self.n_sel, base="b",
                 )
                 + quote
             )
 
             self.architecture.processes["selection"].case_list["mux_sel"].when_list.add(
-                sel_value
+                sel_value,
             )
 
             self.architecture.processes["selection"].case_list["mux_sel"].when_list[
@@ -111,7 +111,7 @@ class Mux(VHDLblock):
         port_name = "in" + str(self.n_in - 1)
 
         self.architecture.processes["selection"].case_list["mux_sel"].others.body.add(
-            "mux_out <= " + port_name + ";"
+            "mux_out <= " + port_name + ";",
         )
 
         # Debug

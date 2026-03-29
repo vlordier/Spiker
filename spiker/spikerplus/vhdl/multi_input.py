@@ -27,12 +27,12 @@ class MultiInput(VHDLblock):
             n_exc_inputs = n_exc_inputs,
             n_inh_inputs = n_inh_inputs,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.control_unit = MultiInputCU(
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)

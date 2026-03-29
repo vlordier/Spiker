@@ -56,7 +56,7 @@ class Layer(VHDLblock):
             n_exc_inputs    = self.n_exc_inputs,
             n_inh_inputs    = self.n_inh_inputs,
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         self.lif_neuron = LIFneuron(
@@ -66,7 +66,7 @@ class Layer(VHDLblock):
             shift       = shift,
             reset       = reset,
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         self.exc_mem = Rom(
@@ -74,7 +74,7 @@ class Layer(VHDLblock):
             bitwidth    = w_exc_bw,
             fp_decimals = fp_decimals,
             name_term   = "_exc" + label,
-            functional  = self.functional
+            functional  = self.functional,
         )
 
         self.inh_mem = Rom(
@@ -82,15 +82,15 @@ class Layer(VHDLblock):
             bitwidth    = w_inh_bw,
             fp_decimals = fp_decimals,
             name_term   = "_inh" + label,
-            functional  = self.functional
+            functional  = self.functional,
         )
 
         self.addr_converter = AddrConverter(
-            bitwidth    = self.exc_cnt_bitwidth
+            bitwidth    = self.exc_cnt_bitwidth,
         )
 
         self.barrier = Barrier(
-            bitwidth    = self.n_neurons
+            bitwidth    = self.n_neurons,
         )
 
         if self.lif_neuron.reset == "fixed":
@@ -216,7 +216,7 @@ class Layer(VHDLblock):
                         "downto 0)",
                 value       = "\"" + int_to_bin(
                         self.v_th[i],self.bitwidth) +
-                        "\""
+                        "\"",
             )
 
             if self.lif_neuron.reset == "fixed":
@@ -229,7 +229,7 @@ class Layer(VHDLblock):
                             "downto 0)",
                     value       = "\"" + int_to_bin(
                             self.v_reset[i],
-                            self.bitwidth) + "\""
+                            self.bitwidth) + "\"",
                 )
 
         # Signals
@@ -284,24 +284,24 @@ class Layer(VHDLblock):
             name        = "exc_addr",
             signal_type = "std_logic_vector("
                         "exc_cnt_bitwidth - 1 "
-                        "downto 0)"
+                        "downto 0)",
         )
 
         self.architecture.signal.add(
             name        = "inh_addr",
             signal_type = "std_logic_vector("
                         "inh_cnt_bitwidth - 1 "
-                        "downto 0)"
+                        "downto 0)",
         )
         self.architecture.signal.add(
             name        = "neuron_restart",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
 
         self.architecture.signal.add(
             name        = "barrier_ready",
-            signal_type = "std_logic"
+            signal_type = "std_logic",
         )
 
         self.architecture.signal.add(
@@ -432,7 +432,7 @@ class Layer(VHDLblock):
                 self.architecture.instances[neuron_name].p_map.\
                     add("neuron_dp_none_v",
                         "neuron_dp_none_v(" + str(self.bitwidth * (i+1) - 1) +
-                        " downto " + str(self.bitwidth * i) + ")"
+                        " downto " + str(self.bitwidth * i) + ")",
                     )
 
 
@@ -527,7 +527,7 @@ class Layer(VHDLblock):
                 name        = "neuron_dp_none_v",
                 direction   = "out",
                 port_type   = "signed(" + \
-                    str(self.bitwidth*self.n_neurons - 1) + " downto 0)"
+                    str(self.bitwidth*self.n_neurons - 1) + " downto 0)",
             )
 
 
@@ -583,7 +583,7 @@ class Layer_tb(Testbench):
             shift       = shift,
             reset       = reset,
             debug       = debug,
-            debug_list  = debug_list
+            debug_list  = debug_list,
         )
 
         if self.dut.lif_neuron.reset == "fixed":
@@ -599,7 +599,7 @@ class Layer_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(
@@ -608,7 +608,7 @@ class Layer_tb(Testbench):
             output_dir      = output_dir,
             file_input      = file_input,
             input_dir       = input_dir,
-            input_signal_list   = input_signal_list
+            input_signal_list   = input_signal_list,
             )
 
 

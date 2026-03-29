@@ -5,7 +5,7 @@ import logging
 import torch
 
 
-def get_device(prefer_gpu: bool = True) -> torch.device:
+def get_device(*, prefer_gpu: bool = True) -> torch.device:
     """Get the best available device for computation.
 
     Args:
@@ -20,7 +20,9 @@ def get_device(prefer_gpu: bool = True) -> torch.device:
             device_name = torch.cuda.get_device_name(0)
             memory = torch.cuda.get_device_properties(0).total_memory / 1e9
             logging.info(
-                "Using CUDA device: %s (%.1fGB total memory)", device_name, memory
+                "Using CUDA device: %s (%.1fGB total memory)",
+                device_name,
+                memory,
             )
             return device
 

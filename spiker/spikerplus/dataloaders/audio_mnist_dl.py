@@ -20,6 +20,7 @@ class AudioMnistDL:
     def __init__(
         self,
         data_dir: str | Path,
+        *,
         fft_window: float = 25e-3,  # s
         hop_length_s: float = 10e-3,  # s
         n_channels: int = 40,
@@ -79,11 +80,13 @@ class AudioMnistDL:
 
         # Split the dataset into training and validation sets
         self.train_set, self.test_set = random_split(
-            self.dataset, [train_len, test_len]
+            self.dataset,
+            [train_len, test_len],
         )
 
     def load(
         self,
+        *,
         train_drop_last: bool = True,
         train_shuffle: bool = True,
         test_drop_last: bool = True,
@@ -217,6 +220,7 @@ class MelFilterbank:
     def __init__(
         self,
         sample_rate: float = 48e3,
+        *,
         fft_window: float = 25e-3,
         hop_length_s: float = 10e-3,
         n_mels: int = 40,

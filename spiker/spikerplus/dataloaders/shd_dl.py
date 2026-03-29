@@ -20,6 +20,7 @@ class ShdDL:
     def __init__(
         self,
         data_dir: str | Path,
+        *,
         transform: Callable | str = "default",
         download: bool = True,
         num_steps: int = 100,
@@ -45,7 +46,7 @@ class ShdDL:
                     ),
                     Squeeze(dim=1),
                     ToFloatTensor(),
-                ]
+                ],
             )
 
         else:
@@ -54,15 +55,20 @@ class ShdDL:
         self.num_cpu_cores: int | None = os.cpu_count()
 
         self.train_set = tonic.datasets.hsd.SHD(
-            save_to=data_dir, train=True, transform=self.transform
+            save_to=data_dir,
+            train=True,
+            transform=self.transform,
         )
 
         self.test_set = tonic.datasets.hsd.SHD(
-            save_to=data_dir, train=False, transform=self.transform
+            save_to=data_dir,
+            train=False,
+            transform=self.transform,
         )
 
     def load(
         self,
+        *,
         train_drop_last: bool = True,
         train_shuffle: bool = True,
         test_drop_last: bool = True,

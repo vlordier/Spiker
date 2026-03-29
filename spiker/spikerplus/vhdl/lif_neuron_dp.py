@@ -17,7 +17,7 @@ class LIFneuronDP(VHDLblock):
         self.reset_types = [
             "fixed",
             "subtractive",
-            "none"
+            "none",
         ]
 
         if reset not in self.reset_types:
@@ -47,7 +47,7 @@ class LIFneuronDP(VHDLblock):
                             n_in = 2,
                             in_type = "signed",
                             bitwidth =
-                            bitwidth
+                            bitwidth,
                         )
 
         self.reg_signed_sync_rst    = Reg(
@@ -262,19 +262,19 @@ class LIFneuronDP(VHDLblock):
 
             self.architecture.signal.add(
                 name        = "in2_signal",
-                signal_type = "signed(neuron_bit_width-1 downto 0)"
+                signal_type = "signed(neuron_bit_width-1 downto 0)",
             )
 
             self.architecture.bodyCodeHeader.add(
                 "in2_signal(neuron_bit_width-1 downto exc_weights_bit_width)" +
                 " <= (others => exc_weight(exc_weights_bit_width-1))",
-                line_end = ";\n"
+                line_end = ";\n",
             )
 
             self.architecture.bodyCodeHeader.add(
                 "in2_signal(exc_weights_bit_width-1 downto 0)" +
                 " <= exc_weight",
-                line_end = ";\n"
+                line_end = ";\n",
             )
 
             self.architecture.instances["update_mux"].p_map.add(
@@ -293,19 +293,19 @@ class LIFneuronDP(VHDLblock):
 
             self.architecture.signal.add(
                 name        = "in3_signal",
-                signal_type = "signed(neuron_bit_width-1 downto 0)"
+                signal_type = "signed(neuron_bit_width-1 downto 0)",
             )
 
             self.architecture.bodyCodeHeader.add(
                 "in3_signal(neuron_bit_width-1 downto inh_weights_bit_width)" +
                 " <= (others => inh_weight(inh_weights_bit_width-1))",
-                line_end = ";\n"
+                line_end = ";\n",
             )
 
             self.architecture.bodyCodeHeader.add(
                 "in3_signal(inh_weights_bit_width-1 downto 0)" +
                 " <= inh_weight",
-                line_end = ";\n"
+                line_end = ";\n",
             )
 
             self.architecture.instances["update_mux"].p_map.add(
@@ -420,7 +420,7 @@ class LIFneuronDP_tb(Testbench):
             shift = shift,
             reset = reset,
             debug = debug,
-            debug_list = debug_list
+            debug_list = debug_list,
         )
 
         self.components = sub_components(self)
@@ -432,7 +432,7 @@ class LIFneuronDP_tb(Testbench):
             output_dir = output_dir,
             file_input = file_input,
             input_dir = input_dir,
-            input_signal_list = input_signal_list
+            input_signal_list = input_signal_list,
         )
 
         self.vhdl(clock_period = clock_period, file_output = file_output)

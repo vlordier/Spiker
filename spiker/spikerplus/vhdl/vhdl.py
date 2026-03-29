@@ -24,11 +24,11 @@ def write_file_all(component, output_dir="output", rm=False):
     if is_iterable(component) and component.keys():
         for key in component:
             if hasattr(component[key], "write_file_all") and callable(
-                component[key].write_file_all
+                component[key].write_file_all,
             ):
                 component[key].write_file_all(output_dir=output_dir)
             elif hasattr(component[key], "write_file") and callable(
-                component[key].write_file
+                component[key].write_file,
             ):
                 component[key].write_file(output_dir=output_dir)
 
@@ -117,7 +117,7 @@ def simulate(component, output_dir="output", sim_duration="1000ns", log=False):
     if not isinstance(sim_duration, str):
         raise TypeError(
             "sim_duration must be string in the form: "
-            "<number><time unit measure>. E.g. 1000ns"
+            "<number><time unit measure>. E.g. 1000ns",
         )
 
     if not isinstance(output_dir, str):
