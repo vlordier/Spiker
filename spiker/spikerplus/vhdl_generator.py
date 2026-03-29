@@ -33,11 +33,14 @@ class VhdlGenerator:
         self.net = net
         self.optim_config = optim_config
 
-        self.input_size: int = self.input_size(next(iter(self.net.layers)))
-        self.output_size: int = self.output_size(list(self.net.layers)[-2])
+        self.input_size: int = self._compute_input_size(next(iter(self.net.layers)))
+        self.output_size: int = self._compute_output_size(list(self.net.layers)[-2])
 
     def generate(
-        self, functional: bool = True, interface: bool = False, debug: bool = False,
+        self,
+        functional: bool = True,
+        interface: bool = False,
+        debug: bool = False,
     ) -> Network | FullAccelerator:
         """Generate VHDL code for the network.
 
@@ -64,7 +67,7 @@ class VhdlGenerator:
 
         return FullAccelerator(vhdl_net, self.input_size, self.output_size)
 
-    def input_size(self, layer: str) -> int:
+    def _compute_input_size(self, layer: str) -> int:
         """Compute input size for a layer.
 
         Args:
@@ -80,7 +83,7 @@ class VhdlGenerator:
 
         raise ValueError("Cannot compute size. I need a linear layer")
 
-    def output_size(self, layer: str) -> int:
+    def _compute_output_size(self, layer: str) -> int:
         """Compute output size for a layer.
 
         Args:
