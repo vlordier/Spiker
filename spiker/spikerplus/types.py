@@ -226,9 +226,15 @@ class OptimizerConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for backward compatibility."""
         return {
-            "weights_bw": {"min": self.weights_bw[0], "max": self.weights_bw[1]},
-            "neurons_bw": {"min": self.neurons_bw[0], "max": self.neurons_bw[1]},
-            "fp_dec": {"min": self.fp_dec[0], "max": self.fp_dec[1]},
+            "weights_bw": {
+                "min_val": self.weights_bw[0],
+                "max_val": self.weights_bw[1],
+            },
+            "neurons_bw": {
+                "min_val": self.neurons_bw[0],
+                "max_val": self.neurons_bw[1],
+            },
+            "fp_dec": {"min_val": self.fp_dec[0], "max_val": self.fp_dec[1]},
         }
 
     @classmethod
@@ -366,8 +372,8 @@ class LayerDict(TypedDict, total=False):
 class OptimizerRangeDict(TypedDict, total=False):
     """Typed dictionary for optimizer range configuration."""
 
-    min: int
-    max: int
+    min_val: int
+    max_val: int
 
 
 class OptimizerDict(TypedDict, total=False):

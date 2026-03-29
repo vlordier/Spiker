@@ -265,9 +265,9 @@ class Optimizer:
         self._net_builder = NetBuilder(net_dict)
 
         self.default_config: dict[str, dict[str, int]] = {
-            "weights_bw": {"min": 4, "max": 8},
-            "neurons_bw": {"min": 4, "max": 10},
-            "fp_dec": {"min": 2, "max": 3},
+            "weights_bw": {"min_val": 4, "max_val": 8},
+            "neurons_bw": {"min_val": 4, "max_val": 10},
+            "fp_dec": {"min_val": 2, "max_val": 3},
         }
 
         self.allowed_keys = self.default_config.keys()
@@ -345,25 +345,25 @@ class Optimizer:
 
         for key in optim_config:
             if key in self.allowed_keys:
-                if "min" in optim_config[key]:
-                    if not isinstance(optim_config[key]["min"], int):
+                if "min_val" in optim_config[key]:
+                    if not isinstance(optim_config[key]["min_val"], int):
                         msg = "Range specifiers must be integers"
                         raise ValueError(msg)
 
-                    min_value = optim_config[key]["min"]
+                    min_value = optim_config[key]["min_val"]
 
                 else:
-                    min_value = self.default_config[key]["min"]
+                    min_value = self.default_config[key]["min_val"]
 
-                if "max" in optim_config[key]:
-                    if not isinstance(optim_config[key]["max"], int):
+                if "max_val" in optim_config[key]:
+                    if not isinstance(optim_config[key]["max_val"], int):
                         msg = "Range specifiers must be integers"
                         raise ValueError(msg)
 
-                    max_value = optim_config[key]["max"]
+                    max_value = optim_config[key]["max_val"]
 
                 else:
-                    max_value = self.default_config[key]["max"]
+                    max_value = self.default_config[key]["max_val"]
 
                 optim_dict[key] = list(range(min_value, max_value + 1))
 
