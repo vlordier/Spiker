@@ -157,11 +157,6 @@ ignore = [
     "ANN401",  # Dynamically typed expressions (typing.Any)
     "ANN002",  # Missing type annotation for *args
     "ANN003",  # Missing type annotation for **kwargs
-    "PTH208",  # Use pathlib.Path.iterdir() instead
-    "PTH118",  # os.path.join() should be replaced by Path with / operator
-    "PTH112",  # os.path.isdir() should be replaced by Path.is_dir()
-    "PTH110",  # os.path.exists should be replaced by Path.exists
-    "PTH103",  # os.makedirs should be replaced by Path.mkdir
 ]
 
 [tool.ruff.lint.per-file-ignores]

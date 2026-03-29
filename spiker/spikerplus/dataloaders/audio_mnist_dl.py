@@ -157,18 +157,14 @@ class CustomDataset(Dataset):
 
         self.data: list[tuple[str, int]] = []
 
-        # Loop over all the users' directories
-        for user_folder in os.listdir(root_dir):
-            user_path = os.path.join(root_dir, user_folder)
-
-            if os.path.isdir(user_path):
-                # Loop over all the WAV recordings
-                for file_name in os.listdir(user_path):
-                    if file_name.endswith(".wav"):
-                        file_path = os.path.join(user_path, file_name)
-                        # Extract label from filename
-                        label = int(file_name.split("_")[0])
-                        self.data.append((file_path, label))
+        root_path = Path(root_dir)
+        for user_path in root_path.iterdir():
+            if not user_path.is_dir():
+                continue
+            for file_path in user_path.iterdir():
+                if file_path.suffix == ".wav":
+                    label = int(file_path.stem.split("_")[0])
+                    self.data.append((str(file_path), label))
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""

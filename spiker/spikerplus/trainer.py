@@ -5,8 +5,8 @@ neural networks with various readout strategies.
 """
 
 import logging
-import os
 import time
+from pathlib import Path
 
 import torch
 import torch.nn.functional as fn
@@ -314,13 +314,13 @@ class Trainer:
             out_file: Filename for the saved model.
 
         """
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
+        out_dir_path = Path(out_dir)
+        out_dir_path.mkdir(parents=True, exist_ok=True)
 
         if not out_file:
             out_file = _DEFAULT_STATE_DICT_FILE
 
-        out_path = f"{out_dir}/{out_file}"
+        out_path = out_dir_path / out_file
 
         torch.save(self.net.state_dict(), out_path)
 
