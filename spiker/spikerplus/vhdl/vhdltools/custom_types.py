@@ -26,7 +26,6 @@ class EnumerationTypeObj:
             self.add(args[0])
 
     def SetNewLine(self, input):
-        pass
         if input:
             self.newLine = True
             self.endLine = ",\n"
@@ -46,9 +45,9 @@ class EnumerationTypeObj:
     def code(self, indent_level=1):
         hdl_code = ""
         if self.typeElement:
-            hdl_code =  hdl_code + indent(indent_level) + "type %s is ( " % self.name
+            hdl_code = hdl_code + indent(indent_level) + "type %s is ( " % self.name
             hdl_code = hdl_code + "\n"
-            hdl_code = hdl_code + "%s" % VHDLenum(self.typeElement, indent_level+1)
+            hdl_code = hdl_code + "%s" % VHDLenum(self.typeElement, indent_level + 1)
             hdl_code = hdl_code + "\n"
             hdl_code = hdl_code + indent(indent_level) + ");\n\n"
         return hdl_code
@@ -60,10 +59,13 @@ class ArrayTypeObj:
         self.arrayRange = args[0]
         self.arrayType = args[1]
 
-    def code(self, indent_level = 1):
+    def code(self, indent_level=1):
         hdl_code = ""
-        hdl_code = indent(indent_level) + "type %s is array (%s) of "\
-        "%s;\n" % (self.name, self.arrayRange, self.arrayType)
+        hdl_code = indent(indent_level) + "type %s is array (%s) of %s;\n" % (
+            self.name,
+            self.arrayRange,
+            self.arrayType,
+        )
         hdl_code = hdl_code + "\n"
         return hdl_code
 
@@ -85,9 +87,12 @@ class RecordTypeObj:
         hdl_code = GenericCodeBlock()
         hdl_code.add("type %s is record" % self.name)
         for j in self.element:
-            hdl_code.add(indent(1) + "%s : %s;" % (self.element[j].name, self.element[j].type) )
-        hdl_code.add( "end record %s;" % self.name )
+            hdl_code.add(
+                indent(1) + "%s : %s;" % (self.element[j].name, self.element[j].type)
+            )
+        hdl_code.add("end record %s;" % self.name)
         return hdl_code.code()
+
 
 class SubTypeObj:
     def __init__(self, name, *args):
@@ -100,14 +105,24 @@ class SubTypeObj:
 
     def code(self):
         hdl_code = ""
-        hdl_code = hdl_code + indent(1) + "subtype %s is %s (\n" % (self.name, self.ofType)
+        hdl_code = (
+            hdl_code + indent(1) + "subtype %s is %s (\n" % (self.name, self.ofType)
+        )
         i = 0
         for j in self.element:
             i += 1
-            if (i == len(self.element)):
-                hdl_code = hdl_code + indent(2) + "%s (%s)); \n" % (self.element[j].name, self.element[j].type)
+            if i == len(self.element):
+                hdl_code = (
+                    hdl_code
+                    + indent(2)
+                    + "%s (%s)); \n" % (self.element[j].name, self.element[j].type)
+                )
             else:
-                hdl_code = hdl_code + indent(2) + "%s (%s),\n" % (self.element[j].name, self.element[j].type)
+                hdl_code = (
+                    hdl_code
+                    + indent(2)
+                    + "%s (%s),\n" % (self.element[j].name, self.element[j].type)
+                )
                 hdl_code = hdl_code + "\n"
         return hdl_code
 
@@ -127,4 +142,4 @@ class CustomTypeList(dict):
             self[name] = IncompleteTypeObj(name)
 
     def code(self, indent_level=0):
-        return DictCode(self, indent_level = indent_level)
+        return DictCode(self, indent_level=indent_level)
