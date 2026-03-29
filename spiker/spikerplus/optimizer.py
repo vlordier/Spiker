@@ -343,24 +343,24 @@ class Optimizer:
         """
         optim_dict: dict[str, dict[str, int]] = {}
 
-        for key in optim_config:
+        for key, config in optim_config.items():
             if key in self.allowed_keys:
-                if "min_val" in optim_config[key]:
-                    if not isinstance(optim_config[key]["min_val"], int):
+                if "min_val" in config:
+                    if not isinstance(config["min_val"], int):
                         msg = "Range specifiers must be integers"
                         raise ValueError(msg)
 
-                    min_value = optim_config[key]["min_val"]
+                    min_value = config["min_val"]
 
                 else:
                     min_value = self.default_config[key]["min_val"]
 
-                if "max_val" in optim_config[key]:
-                    if not isinstance(optim_config[key]["max_val"], int):
+                if "max_val" in config:
+                    if not isinstance(config["max_val"], int):
                         msg = "Range specifiers must be integers"
                         raise ValueError(msg)
 
-                    max_value = optim_config[key]["max_val"]
+                    max_value = config["max_val"]
 
                 else:
                     max_value = self.default_config[key]["max_val"]

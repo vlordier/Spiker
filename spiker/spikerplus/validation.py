@@ -272,6 +272,6 @@ def validate_net_config(net_dict: dict[str, Any]) -> None:
             raise LayerConfigError(msg)
 
     # Validate each layer
-    for key in net_dict:
+    for key, value in net_dict.items():
         if "layer" in key:
-            validate_layer_config(net_dict[key])
+            validate_layer_config(value)

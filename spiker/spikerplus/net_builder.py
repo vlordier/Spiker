@@ -64,10 +64,10 @@ class SNN(nn.Module):
         """
         first: bool = True
 
-        for key in net_dict:
+        for key, value in net_dict.items():
             if "layer" in key:
                 idx: str = str(self.extract_index(key) + 1)
-                layer_config = net_dict[key]
+                layer_config = value
                 neuron_model_str = layer_config["neuron_model"]
 
                 try:
@@ -412,16 +412,16 @@ class NetBuilder:
         parsed_dict: dict[str, Any],
     ) -> None:
         """Parse global network configuration parameters."""
-        for key in net_dict:
+        for key, value in net_dict.items():
             if (
                 any(allowed in key for allowed in self.net_allowed_keys)
                 and "layer" not in key
             ):
-                if not isinstance(net_dict[key], int):
+                if not isinstance(value, int):
                     msg = f"{key} must be an integer value"
                     raise LayerConfigError(msg)
 
-                parsed_dict[key] = net_dict[key]
+                parsed_dict[key] = value
 
     def _parse_layer_config(
         self,
@@ -429,13 +429,13 @@ class NetBuilder:
         parsed_dict: dict[str, Any],
     ) -> None:
         """Parse layer configuration parameters."""
-        for key in net_dict:
+        for key, value in net_dict.items():
             if (
                 any(allowed in key for allowed in self.net_allowed_keys)
                 and "layer" in key
             ):
                 parsed_dict[key] = {}
-                layer: dict[str, Any] = net_dict[key]
+                layer: dict[str, Any] = value
 
                 self._parse_layer_neurons(layer, parsed_dict[key])
                 self._parse_layer_model(layer, parsed_dict[key])

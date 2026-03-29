@@ -134,7 +134,6 @@ ignore = [
     "FBT001",  # Boolean positional value in function call
     "FBT003",  # Boolean positional value in function call
     "PLW2901", # Loop variable overwritten (common pattern)
-    "PLC0206", # Extracting value from dictionary without calling .items()
     "C416",    # Unnecessary list comprehension
     "C419",    # Unnecessary list comprehension
     "PLR0912", # Too many branches
