@@ -45,7 +45,7 @@ class Rom(VHDLblock):
         self.init_array = init_array
         self.bitwidth = bitwidth
 
-        if fp_decimals == None:
+        if fp_decimals is None:
             self.fp_decimals = bitwidth - 1
         else:
             self.fp_decimals = fp_decimals
