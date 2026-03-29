@@ -81,7 +81,8 @@ class VhdlGenerator:
 
             return ff_w.shape[1]
 
-        raise ValueError("Cannot compute size. I need a linear layer")
+        msg = "Cannot compute size. I need a linear layer"
+        raise ValueError(msg)
 
     def _compute_output_size(self, layer: str) -> int:
         """Compute output size for a layer.
@@ -97,7 +98,8 @@ class VhdlGenerator:
 
             return ff_w.shape[0]
 
-        raise ValueError("Cannot compute size. I need a linear layer")
+        msg = "Cannot compute size. I need a linear layer"
+        raise ValueError(msg)
 
     def init_layer(self, layer: str, ff_w: npt.NDArray[np.float64]) -> Layer:
         """Initialize a VHDL layer from network layer.
@@ -210,13 +212,16 @@ class VhdlGenerator:
             alpha = self.net.layers[layer].alpha.data.item()
 
             if not isinstance(alpha, float):
-                raise ValueError("Alpha decay must be float")
+                msg = "Alpha decay must be float"
+                raise ValueError(msg)
 
             if alpha < 0.0 or alpha > 1.0:
-                raise ValueError("Alpha decay must be between 0 and 1")
+                msg = "Alpha decay must be between 0 and 1"
+                raise ValueError(msg)
 
             return self.pow2_shift(1 - alpha)
-        raise ValueError("Layer does not have alpha attribute")
+        msg = "Layer does not have alpha attribute"
+        raise ValueError(msg)
 
     def extract_beta(self, layer: str) -> int:
         """Extract beta decay parameter from a network layer.
@@ -234,13 +239,16 @@ class VhdlGenerator:
             beta = self.net.layers[layer].beta.data.item()
 
             if not isinstance(beta, float):
-                raise ValueError("Beta decay must be float")
+                msg = "Beta decay must be float"
+                raise ValueError(msg)
 
             if beta < 0.0 or beta > 1.0:
-                raise ValueError("Beta decay must be between 0 and 1")
+                msg = "Beta decay must be between 0 and 1"
+                raise ValueError(msg)
 
             return self.pow2_shift(1 - beta)
-        raise ValueError("Layer does not have beta attribute")
+        msg = "Layer does not have beta attribute"
+        raise ValueError(msg)
 
     def pow2_shift(self, value: float) -> int:
         """Calculate power-of-2 shift for fixed-point representation.
@@ -255,5 +263,6 @@ class VhdlGenerator:
             ValueError: If value is not positive.
         """
         if value <= 0:
-            raise ValueError("Value must be positive for log2 calculation")
+            msg = "Value must be positive for log2 calculation"
+            raise ValueError(msg)
         return round(log2(value))

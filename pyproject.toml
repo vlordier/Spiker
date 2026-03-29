@@ -140,7 +140,6 @@ ignore = [
     "PLR1714", # Consider merging multiple comparisons
     "PIE804",  # Unnecessary dict kwargs
     "PERF102", # When using only the values of a dict use the values() method
-    "EM101",   # Exception must not use a string literal
     "Q003",    # Change outer quotes to avoid escaping inner quotes
     "Q004",    # Unnecessary escape on inner quote character
     "LOG015",  # warning/info call on root logger
