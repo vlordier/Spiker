@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from math import log2
+from typing import Final
 
 import numpy as np
 import torch
@@ -22,6 +23,8 @@ from .vhdltools.if_statement import ConditionsList, If
 from .vhdltools.instance import Instance
 from .vhdltools.text import SingleCodeLine
 from .vhdltools.vhdl_block import VHDLblock
+
+_MIN_MUX_OUTPUT_SIZE: Final = 2
 
 
 class Network(VHDLblock, dict):
@@ -502,13 +505,13 @@ class FullAccelerator(VHDLblock):
         self.architecture.instances.add(self.output_mux, "output_mux")
         self.architecture.instances["output_mux"].port_map()
 
-        if self.output_size > 2:
+        if self.output_size > _MIN_MUX_OUTPUT_SIZE:
             self.architecture.instances["output_mux"].p_map.add(
                 "mux_sel",
                 "out_spike_addr",
             )
 
-        elif self.output_size <= 2:
+        elif self.output_size <= _MIN_MUX_OUTPUT_SIZE:
             self.architecture.instances["output_mux"].p_map.add(
                 "mux_sel",
                 "out_spike_addr(0)",

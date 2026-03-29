@@ -4,6 +4,8 @@ from .utils import ceil_pow2
 from .vhdl import debug_component, sub_components
 from .vhdltools.vhdl_block import VHDLblock
 
+_MIN_MUX_INPUTS = 2
+
 
 class Mux(VHDLblock):
     def __init__(
@@ -24,7 +26,7 @@ class Mux(VHDLblock):
             self.name = self.name + "_" + in_type
 
         # Check input parameters
-        if not isinstance(n_in, int) or n_in < 2:
+        if not isinstance(n_in, int) or n_in < _MIN_MUX_INPUTS:
             raise TypeError("Invalid number of inputs in " + self.name)
 
         if not isinstance(in_type, str) or (
