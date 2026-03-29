@@ -280,8 +280,8 @@ def coe_file(str_array, out_file, output_dir="output"):
     with open(output_dir + "/" + out_file, "w") as fp:
         fp.write(coe_header)
 
-        for i in range(len(str_array)):
+        for i, item in enumerate(str_array):
             if i < len(str_array) - 1:
-                fp.write(str_array[i] + ",\n")
+                fp.write(item + ",\n")
             else:
-                fp.write(str_array[i] + ";\n")
+                fp.write(item + ";\n")

@@ -95,7 +95,7 @@ class ReadoutType(Enum):
         raise ValueError(msg)
 
 
-@dataclass
+@dataclass(frozen=True)
 class LayerConfig:
     """Configuration for a single network layer.
 
@@ -162,7 +162,7 @@ class LayerConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class NetworkConfig:
     """Configuration for the entire network.
 
@@ -209,7 +209,7 @@ class NetworkConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class OptimizerConfig:
     """Configuration for the optimizer.
 
@@ -261,7 +261,7 @@ class OptimizerConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class TrainingConfig:
     """Configuration for training.
 
@@ -310,7 +310,7 @@ class TrainingConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class QuantizationConfig:
     """Configuration for quantization.
 
