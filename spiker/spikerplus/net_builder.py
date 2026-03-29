@@ -398,11 +398,11 @@ class NetBuilder:
 
         allowed_keys: list[str] = []
 
-        for k in keywords:
-            k = re.sub(r"\d+", "", k)
+        for keyword in keywords:
+            cleaned = re.sub(r"\d+", "", keyword)
 
-            if k not in allowed_keys:
-                allowed_keys.append(k)
+            if cleaned not in allowed_keys:
+                allowed_keys.append(cleaned)
 
         return allowed_keys
 

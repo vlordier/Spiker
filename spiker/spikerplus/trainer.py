@@ -151,15 +151,15 @@ class Trainer:
         batch_count = 0
 
         # Iterate over the dataloader
-        for _batch_idx, (data, labels) in enumerate(dataloader):
-            data = data.permute(1, 0, 2).to(self.device)
-            labels = labels.to(self.device)
+        for _batch_idx, (batch_data, batch_labels) in enumerate(dataloader):
+            batch_data = batch_data.permute(1, 0, 2).to(self.device)
+            labels = batch_labels.to(self.device)
 
             self.optimizer.zero_grad(set_to_none=True)
 
             self.net.train()
 
-            self.net(data)
+            self.net(batch_data)
 
             out_rec, targets = self.readout(labels)
 
@@ -195,11 +195,11 @@ class Trainer:
             batch_count = 0
 
             # Iterate over the dataloader
-            for _batch_idx, (data, labels) in enumerate(dataloader):
-                data = data.permute(1, 0, 2).to(self.device)
-                labels = labels.to(self.device)
+            for _batch_idx, (batch_data, batch_labels) in enumerate(dataloader):
+                batch_data = batch_data.permute(1, 0, 2).to(self.device)
+                labels = batch_labels.to(self.device)
 
-                self.net(data)
+                self.net(batch_data)
 
                 out_rec, targets = self.readout(labels)
 
