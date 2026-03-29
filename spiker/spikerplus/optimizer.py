@@ -84,10 +84,7 @@ class Quantizer:
             Saturated value.
 
         """
-        if (
-            type(value).__module__ == np.__name__
-            or type(value).__module__ == torch.__name__
-        ):
+        if isinstance(value, (np.ndarray, torch.Tensor)):
             value[value > 2 ** (bitwidth - 1) - 1] = 2 ** (bitwidth - 1) - 1
             value[value < -(2 ** (bitwidth - 1))] = -(2 ** (bitwidth - 1))
 
@@ -113,10 +110,10 @@ class Quantizer:
             Integer representation of the value.
 
         """
-        if type(value).__module__ == np.__name__:
+        if isinstance(value, np.ndarray):
             quant = value.astype(int).astype(float)
 
-        elif type(value).__module__ == torch.__name__:
+        elif isinstance(value, torch.Tensor):
             quant = value.type(torch.int64).float()
 
         else:

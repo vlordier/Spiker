@@ -57,7 +57,7 @@ class MapList(dict):
 
             for target in self.elements_list:
                 if self.elements_list[target].name in kwargs:
-                    if type(kwargs[target]) == str:
+                    if isinstance(kwargs[target], str):
                         source_name = kwargs[target]
 
                     elif hasattr(kwargs[target], "name"):
@@ -99,7 +99,7 @@ class MapList(dict):
                 print(self.code())
                 del self[target_name]
 
-            if type(source) == str:
+            if isinstance(source, str):
                 self[target_name + conn_range] = MapObj(target_name, source, conn_range)
 
             elif hasattr(source, "name"):

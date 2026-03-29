@@ -412,7 +412,7 @@ class NetBuilder:
                 any(allowed in key for allowed in self.net_allowed_keys)
                 and "layer" not in key
             ):
-                if type(net_dict[key]) is not int:
+                if not isinstance(net_dict[key], int):
                     msg = f"{key} must be an integer value"
                     raise LayerConfigError(msg)
 

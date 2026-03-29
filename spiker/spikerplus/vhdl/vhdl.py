@@ -114,14 +114,14 @@ def elaborate(component, output_dir="output"):
 
 def simulate(component, output_dir="output", sim_duration="1000ns", log=False):
 
-    if type(sim_duration) is not str:
-        raise ValueError(
+    if not isinstance(sim_duration, str):
+        raise TypeError(
             "sim_duration must be string in the form: "
             "<number><time unit measure>. E.g. 1000ns"
         )
 
-    if type(output_dir) is not str:
-        raise ValueError("output_dir must be string.")
+    if not isinstance(output_dir, str):
+        raise TypeError("output_dir must be string.")
 
     sim_script = "sim_script.tcl"
 
