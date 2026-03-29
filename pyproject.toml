@@ -147,7 +147,7 @@ ignore = [
     "LOG015",  # warning/info call on root logger
     "PLR0402", # Use from torch import nn in lieu of alias
     "DJ",      # flake8-django (not applicable)
-    "RUF022",  # __all__ is not sorted (style preference)
+    "RUF022",  # __all__ is not sorted (style preference - grouped comments)
     "D100",    # Missing docstring in public module
     "D104",    # Missing docstring in public package
     "D107",    # Missing docstring in __init__
