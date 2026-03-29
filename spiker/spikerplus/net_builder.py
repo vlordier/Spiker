@@ -7,7 +7,7 @@ with various neuron models and configurations.
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, Final
 
 import snntorch as snn
 import torch
@@ -16,13 +16,13 @@ from torch import nn
 from .exceptions import LayerConfigError, NeuronModelError
 from .types import NeuronModel, ResetMechanism
 
-_LAYER_FC = "fc"
-_LAYER_IF = "if"
-_LAYER_LIF = "lif"
-_LAYER_SYN = "syn"
-_LAYER_RIF = "rif"
-_LAYER_RLIF = "rlif"
-_LAYER_RSYN = "rsyn"
+_LAYER_FC: Final = "fc"
+_LAYER_IF: Final = "if"
+_LAYER_LIF: Final = "lif"
+_LAYER_SYN: Final = "syn"
+_LAYER_RIF: Final = "rif"
+_LAYER_RLIF: Final = "rlif"
+_LAYER_RSYN: Final = "rsyn"
 
 
 class SNN(nn.Module):

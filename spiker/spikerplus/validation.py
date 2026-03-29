@@ -1,7 +1,7 @@
 """Input validation decorators and helpers for Spiker framework."""
 
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from functools import wraps
 from typing import Any
 
@@ -55,7 +55,7 @@ def validate_range(
 
 def validate_choice(
     value: object,
-    valid_choices: list[object],
+    valid_choices: Sequence[object],
     param_name: str,
 ) -> None:
     """Validate that a value is one of the valid choices.
@@ -80,7 +80,7 @@ def validate_config_param(
     expected_type: type | None = None,
     min_val: float | None = None,
     max_val: float | None = None,
-    valid_choices: list[object] | None = None,
+    valid_choices: Sequence[object] | None = None,
     required: bool = True,
 ) -> Callable:
     """Validate configuration parameters with the decorated function.
@@ -127,7 +127,7 @@ def _extract_parameter_value(
 ) -> object | None:
     """Extract parameter value from function arguments."""
     value = kwargs.get(param_name)
-    if value is None and len(args) > 0:
+    if value is None and args:
         sig = inspect.signature(func)
         param_names = list(sig.parameters.keys())
         if param_name in param_names:
@@ -169,7 +169,7 @@ def _validate_range_if_needed(
 
 def _validate_choices_if_needed(
     value: object,
-    valid_choices: list[object] | None,
+    valid_choices: Sequence[object] | None,
     param_name: str,
 ) -> None:
     """Validate choices if valid_choices is specified."""

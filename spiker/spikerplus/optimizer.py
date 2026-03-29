@@ -6,7 +6,7 @@ including fixed-point quantization and bit-width optimization.
 
 import json
 import logging
-from typing import Any
+from typing import Any, Final
 
 import numpy as np
 import numpy.typing as npt
@@ -19,13 +19,13 @@ from .net_builder import SNN, NetBuilder
 from .trainer import Trainer
 from .types import ReadoutType
 
-_LAYER_FC = "fc"
-_LAYER_IF = "if"
-_LAYER_LIF = "lif"
-_LAYER_SYN = "syn"
-_LAYER_RIF = "rif"
-_LAYER_RLIF = "rlif"
-_LAYER_RSYN = "rsyn"
+_LAYER_FC: Final = "fc"
+_LAYER_IF: Final = "if"
+_LAYER_LIF: Final = "lif"
+_LAYER_SYN: Final = "syn"
+_LAYER_RIF: Final = "rif"
+_LAYER_RLIF: Final = "rlif"
+_LAYER_RSYN: Final = "rsyn"
 
 
 class Quantizer:
