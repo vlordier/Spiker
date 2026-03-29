@@ -25,34 +25,32 @@ from .vhdltools.vhdl_block import VHDLblock
 
 
 class Network(VHDLblock, dict):
+    def __init__(self, n_cycles=10, debug=False, debug_list=[]):
 
-    def __init__(self, n_cycles = 10, debug = False, debug_list = []):
-
-        self.layer_index    = 0
-        self.all_ready      = ConditionsList()
-        self.n_cycles       = n_cycles
+        self.layer_index = 0
+        self.all_ready = ConditionsList()
+        self.n_cycles = n_cycles
 
         self.name = "network"
 
-        self.cycles_cnt_bitwidth = int(log2(ceil_pow2(
-            self.n_cycles+1))) + 1
-
+        self.cycles_cnt_bitwidth = int(log2(ceil_pow2(self.n_cycles + 1))) + 1
 
         self.spiker_pkg = SpikerPackage()
 
         self.multi_cycle = MultiCycle(
-            n_cycles = self.n_cycles,
-            debug = debug,
-            debug_list = debug_list,
+            n_cycles=self.n_cycles,
+            debug=debug,
+            debug_list=debug_list,
         )
 
         self.components = sub_components(self)
 
-        super().__init__(entity_name = self.name)
-        self.vhdl(debug = debug, debug_list = debug_list)
+        super().__init__(entity_name=self.name)
+        self.vhdl(debug=debug, debug_list=debug_list)
 
-
-    def vhdl(self, debug = False, debug_list = []):
+    def vhdl(self, debug=False, debug_list=None):
+        if debug_list is None:
+            debug_list = []
 
         # Libraries and packages
         self.library.add("ieee")
@@ -62,67 +60,46 @@ class Network(VHDLblock, dict):
         self.library.add("work")
         self.library["work"].package.add("spiker_pkg")
 
-
         # Generics
         self.entity.generic.add(
-            name        = "n_cycles",
-            gen_type    = "integer",
-            value       = str(self.n_cycles))
+            name="n_cycles", gen_type="integer", value=str(self.n_cycles)
+        )
         self.entity.generic.add(
-            name        = "cycles_cnt_bitwidth",
-            gen_type    = "integer",
-            value       = str(self.cycles_cnt_bitwidth))
-
+            name="cycles_cnt_bitwidth",
+            gen_type="integer",
+            value=str(self.cycles_cnt_bitwidth),
+        )
 
         # Input controls
-        self.entity.port.add(
-            name        = "clk",
-            direction   = "in",
-            port_type   = "std_logic")
+        self.entity.port.add(name="clk", direction="in", port_type="std_logic")
 
-        self.entity.port.add(
-            name        = "rst_n",
-            direction   = "in",
-            port_type   = "std_logic")
+        self.entity.port.add(name="rst_n", direction="in", port_type="std_logic")
 
-        self.entity.port.add(
-            name        = "start",
-            direction   = "in",
-            port_type   = "std_logic")
+        self.entity.port.add(name="start", direction="in", port_type="std_logic")
 
-        self.entity.port.add(
-            name        = "sample_ready",
-            direction   = "in",
-            port_type   = "std_logic")
+        self.entity.port.add(name="sample_ready", direction="in", port_type="std_logic")
 
         # Output
-        self.entity.port.add(
-            name        = "ready",
-            direction   = "out",
-            port_type   = "std_logic")
+        self.entity.port.add(name="ready", direction="out", port_type="std_logic")
 
-        self.entity.port.add(
-            name        = "sample",
-            direction   = "out",
-            port_type   = "std_logic")
-
+        self.entity.port.add(name="sample", direction="out", port_type="std_logic")
 
         # Components
         self.architecture.component.add(self.multi_cycle)
 
         self.architecture.signal.add(
-            name        = "start_all",
-            signal_type = "std_logic",
+            name="start_all",
+            signal_type="std_logic",
         )
 
         self.architecture.signal.add(
-            name        = "all_ready",
-            signal_type = "std_logic",
+            name="all_ready",
+            signal_type="std_logic",
         )
 
         self.architecture.signal.add(
-            name        = "restart",
-            signal_type = "std_logic",
+            name="restart",
+            signal_type="std_logic",
         )
 
         self.architecture.bodyCodeHeader.add(
@@ -130,24 +107,22 @@ class Network(VHDLblock, dict):
         )
 
         # Multi-input control
-        self.architecture.instances.add(self.multi_cycle,
-                "multi_cycle_control")
+        self.architecture.instances.add(self.multi_cycle, "multi_cycle_control")
         self.architecture.instances["multi_cycle_control"].generic_map()
         self.architecture.instances["multi_cycle_control"].port_map()
 
         self.all_ready.add("sample_ready")
-        self.architecture.bodyCodeHeader.add("all_ready <= " +
-                self.all_ready.code() + ";\n")
-
+        self.architecture.bodyCodeHeader.add(
+            "all_ready <= " + self.all_ready.code() + ";\n"
+        )
 
         # Debug
         if debug:
             debug_component(self, debug_list)
 
-
     def add(self, layer):
 
-        current_layer   = "layer_" + str(self.layer_index)
+        current_layer = "layer_" + str(self.layer_index)
         layer_ready = current_layer + "_ready"
 
         self[current_layer] = layer
@@ -165,124 +140,114 @@ class Network(VHDLblock, dict):
 
         # Add the ready signal for the layer
         self.architecture.signal.add(
-            name        = layer_ready,
-            signal_type = "std_logic",
+            name=layer_ready,
+            signal_type="std_logic",
         )
 
         self.architecture.signal.add(
-            name        = current_layer + "_feedback",
-            signal_type = "std_logic_vector(" +
-                    str(layer.n_neurons-1)  + " downto 0)",
+            name=current_layer + "_feedback",
+            signal_type="std_logic_vector(" + str(layer.n_neurons - 1) + " downto 0)",
         )
 
         # Instantiate the layer
         self.architecture.instances.add(layer, current_layer)
-        self.architecture.instances[current_layer].generic_map\
-            (mode = "self")
+        self.architecture.instances[current_layer].generic_map(mode="self")
         self.architecture.instances[current_layer].port_map()
+        self.architecture.instances[current_layer].p_map.add("start", "start_all")
+        self.architecture.instances[current_layer].p_map.add("ready", layer_ready)
         self.architecture.instances[current_layer].p_map.add(
-            "start", "start_all")
+            "out_spikes", current_layer + "_feedback"
+        )
         self.architecture.instances[current_layer].p_map.add(
-            "ready", layer_ready)
-        self.architecture.instances[current_layer].p_map.add(
-            "out_spikes", current_layer + "_feedback")
-        self.architecture.instances[current_layer].p_map.add(
-            "inh_spikes", current_layer + "_feedback")
-
+            "inh_spikes", current_layer + "_feedback"
+        )
 
         if self.layer_index == 0:
-
             self.entity.port.add(
-                name        = "in_spikes",
-                direction   = "in",
-                port_type   = "std_logic_vector(" +
-                str(layer.n_exc_inputs-1)  + " downto 0)",
+                name="in_spikes",
+                direction="in",
+                port_type="std_logic_vector("
+                + str(layer.n_exc_inputs - 1)
+                + " downto 0)",
             )
 
             self.entity.port.add(
-                name        = "out_spikes",
-                direction   = "out",
-                port_type   = "std_logic_vector(" +
-                str(layer.n_neurons-1)  + " downto 0)",
+                name="out_spikes",
+                direction="out",
+                port_type="std_logic_vector(" + str(layer.n_neurons - 1) + " downto 0)",
             )
 
             self.architecture.instances[current_layer].p_map.add(
-                    "exc_spikes", "in_spikes")
+                "exc_spikes", "in_spikes"
+            )
 
-            self.architecture.bodyCodeHeader.add("out_spikes <= ",
-                    current_layer + "_feedback;\n")
+            self.architecture.bodyCodeHeader.add(
+                "out_spikes <= ", current_layer + "_feedback;\n"
+            )
 
         else:
-
             previous_layer = "layer_" + str(self.layer_index - 1)
 
             if layer.n_exc_inputs != self[previous_layer].n_neurons:
-                raise ValueError("Layer cannot be added to the"
-                        " network. Incompatile number"
-                        " of inputs")
+                raise ValueError(
+                    "Layer cannot be added to the network. Incompatile number of inputs"
+                )
 
             layer_ports = deepcopy(layer.entity.port).items()
 
             # Add layer's output signals
             for _, port in layer_ports:
-
                 if port.direction == "out" and port.name != "ready":
-
                     for _, generic in layer.entity.generic.items():
-
                         if generic.name in port.port_type:
-
                             port.port_type = port.port_type.replace(
-                                    generic.name,
-                                    generic.value,
+                                generic.name,
+                                generic.value,
                             )
 
                     self.entity.port.add(
-                        name        = port.name,
-                        direction   = port.direction,
-                        port_type   = port.port_type,
+                        name=port.name,
+                        direction=port.direction,
+                        port_type=port.port_type,
                     )
 
-
-
-            exc_spikes_internal = "exc_spikes_" + \
-                str(self.layer_index-1) + "_to_" + \
-                str(self.layer_index)
+            exc_spikes_internal = (
+                "exc_spikes_"
+                + str(self.layer_index - 1)
+                + "_to_"
+                + str(self.layer_index)
+            )
 
             self.architecture.signal.add(
-                name        = exc_spikes_internal,
-                signal_type = "std_logic_vector(" +
-                        str(layer.n_exc_inputs - 1) +
-                        " downto 0)",
+                name=exc_spikes_internal,
+                signal_type="std_logic_vector("
+                + str(layer.n_exc_inputs - 1)
+                + " downto 0)",
             )
 
             self.architecture.instances[current_layer].p_map.add(
-                "exc_spikes", exc_spikes_internal)
+                "exc_spikes", exc_spikes_internal
+            )
             self.architecture.bodyCodeHeader[2] = SingleCodeLine(
-                "out_spikes <= ", current_layer +
-                "_feedback;\n")
+                "out_spikes <= ", current_layer + "_feedback;\n"
+            )
 
             self.architecture.bodyCodeHeader.add(
-                exc_spikes_internal + "<= ", previous_layer +
-                "_feedback;\n")
-
+                exc_spikes_internal + "<= ", previous_layer + "_feedback;\n"
+            )
 
         self.all_ready.add(layer_ready, "and")
         self.architecture.bodyCodeHeader[1] = SingleCodeLine(
-                "all_ready <= " + self.all_ready.code()
-                + ";\n")
+            "all_ready <= " + self.all_ready.code() + ";\n"
+        )
 
         self.layer_index += 1
 
-
-
     def first_layer(self):
 
-        attr_list = [ attr for attr in dir(self) if not
-                attr.startswith("__")]
+        attr_list = [attr for attr in dir(self) if not attr.startswith("__")]
 
         for attr_name in attr_list:
-
             sub = getattr(self, attr_name)
 
             print(obj_types(sub))
@@ -292,18 +257,23 @@ class Network(VHDLblock, dict):
 
         return True
 
-    def write_file_all(self, output_dir = "output", rm = False):
-        write_file_all(self, output_dir = output_dir, rm = rm)
-
+    def write_file_all(self, output_dir="output", rm=False):
+        write_file_all(self, output_dir=output_dir, rm=rm)
 
 
 class Network_tb(Testbench):
-
-    def __init__(self, network, clock_period = 20, file_output = False,
-            output_dir = "output", file_input = False,
-            input_dir = "", input_signal_list = [],
-            debug = False, debug_list = []):
-
+    def __init__(
+        self,
+        network,
+        clock_period=20,
+        file_output=False,
+        output_dir="output",
+        file_input=False,
+        input_dir="",
+        input_signal_list=[],
+        debug=False,
+        debug_list=[],
+    ):
 
         self.spiker_pkg = SpikerPackage()
 
@@ -311,43 +281,43 @@ class Network_tb(Testbench):
         self.components = sub_components(self)
 
         super().__init__(
-            dut = self.dut,
-            clock_period = clock_period,
-            file_output = file_output,
-            output_dir = output_dir,
-            file_input = file_input,
-            input_dir = input_dir,
-            input_signal_list = input_signal_list,
+            dut=self.dut,
+            clock_period=clock_period,
+            file_output=file_output,
+            output_dir=output_dir,
+            file_input=file_input,
+            input_dir=input_dir,
+            input_signal_list=input_signal_list,
         )
 
         self.vhdl(
-            clock_period        = clock_period,
-            file_output     = file_output,
-            output_dir      = output_dir,
-            file_input      = file_input,
-            input_dir       = input_dir,
-            input_signal_list   = input_signal_list,
-            )
+            clock_period=clock_period,
+            file_output=file_output,
+            output_dir=output_dir,
+            file_input=file_input,
+            input_dir=input_dir,
+            input_signal_list=input_signal_list,
+        )
 
-
-    def vhdl(self, clock_period = 20, file_output = False, output_dir =
-            "output", file_input = False, input_dir = "",
-            input_signal_list = []):
+    def vhdl(
+        self,
+        clock_period=20,
+        file_output=False,
+        output_dir="output",
+        file_input=False,
+        input_dir="",
+        input_signal_list=[],
+    ):
 
         self.library.add("work")
         self.library["work"].package.add("spiker_pkg")
 
         # rst_n
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '1';")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "wait for 15 ns;")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '0';")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "wait for 10 ns;")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '1';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '1';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("wait for 15 ns;")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '0';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("wait for 10 ns;")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '1';")
 
         # Start
         ready_if = If()
@@ -355,18 +325,16 @@ class Network_tb(Testbench):
         ready_if._if_.body.add("start <= '1';")
         ready_if._else_.body.add("start <= '0';")
 
-
         self.architecture.processes["start_gen"].final_wait = False
-        self.architecture.processes["start_gen"].sensitivity_list.\
-            add("clk")
+        self.architecture.processes["start_gen"].sensitivity_list.add("clk")
         self.architecture.processes["start_gen"].if_list.add()
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            conditions.add("clk'event")
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            conditions.add("clk = '1'", "and")
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            body.add(ready_if)
-
+        self.architecture.processes["start_gen"].if_list[0]._if_.conditions.add(
+            "clk'event"
+        )
+        self.architecture.processes["start_gen"].if_list[0]._if_.conditions.add(
+            "clk = '1'", "and"
+        )
+        self.architecture.processes["start_gen"].if_list[0]._if_.body.add(ready_if)
 
         del self.architecture.processes["sample_ready_gen"]
         self.architecture.bodyCodeHeader.add("sample_ready <= '1';")
@@ -387,15 +355,12 @@ class Network_tb(Testbench):
 
         if file_input and "in_spike" in input_signal_list:
             del self.architecture.processes["in_spikes_rd_en_gen"]
-            self.architecture.bodyCodeHeader.add(
-                "in_spike_rd_en <= ready;")
-            self.architecture.bodyCodeHeader.add(
-                "out_spike_w_en <= ready;")
+            self.architecture.bodyCodeHeader.add("in_spike_rd_en <= ready;")
+            self.architecture.bodyCodeHeader.add("out_spike_w_en <= ready;")
+
 
 class FullAccelerator(VHDLblock):
-
-    def __init__(self, net, input_size, output_size, debug = False,
-            debug_list = []):
+    def __init__(self, net, input_size, output_size, debug=False, debug_list=[]):
 
         self.name = "full_accelerator"
 
@@ -409,26 +374,28 @@ class FullAccelerator(VHDLblock):
         self.out_addr_bw = int(log2(ceil_pow2(self.output_size)))
 
         self.input_decoder = Decoder(
-            bitwidth = self.in_addr_bw,
+            bitwidth=self.in_addr_bw,
         )
 
         self.output_mux = Mux(
-            n_in        = 2**self.out_addr_bw,
-            in_type     = "std_logic",
-            bitwidth    = 1,
+            n_in=2**self.out_addr_bw,
+            in_type="std_logic",
+            bitwidth=1,
         )
 
         self.ff = Reg(
-            bitwidth    = 1,
-            reg_type    = "std_logic",
+            bitwidth=1,
+            reg_type="std_logic",
         )
 
         self.components = sub_components(self)
 
-        super().__init__(entity_name = self.name)
-        self.vhdl(debug = debug, debug_list = debug_list)
+        super().__init__(entity_name=self.name)
+        self.vhdl(debug=debug, debug_list=debug_list)
 
-    def vhdl(self, debug = False, debug_list = []):
+    def vhdl(self, debug=False, debug_list=None):
+        if debug_list is None:
+            debug_list = []
 
         # Libraries and packages
         self.library.add("ieee")
@@ -440,49 +407,41 @@ class FullAccelerator(VHDLblock):
 
         for name in self.net.entity.generic:
             self.entity.generic.add(
-                name        = name,
-                gen_type    = self.net.entity.generic[
-                        name].gen_type,
-                value       = self.net.entity.generic[
-                        name].value,
+                name=name,
+                gen_type=self.net.entity.generic[name].gen_type,
+                value=self.net.entity.generic[name].value,
             )
 
         for name in self.net.entity.port:
-            if name != "in_spikes" and name != \
-            "out_spikes":
-
+            if name != "in_spikes" and name != "out_spikes":
                 self.entity.port.add(
-                    name        = name,
-                    direction   = self.net.entity.port[
-                            name].direction,
-                    port_type   = self.net.entity.port[
-                            name].port_type,
+                    name=name,
+                    direction=self.net.entity.port[name].direction,
+                    port_type=self.net.entity.port[name].port_type,
                 )
 
         self.entity.port.add(
-            name        = "in_spike",
-            direction   = "in",
-            port_type   = "std_logic",
+            name="in_spike",
+            direction="in",
+            port_type="std_logic",
         )
 
         self.entity.port.add(
-            name        = "in_spike_addr",
-            direction   = "in",
-            port_type   = "std_logic_vector(" +
-                    str(self.in_addr_bw - 1) + " downto 0)",
+            name="in_spike_addr",
+            direction="in",
+            port_type="std_logic_vector(" + str(self.in_addr_bw - 1) + " downto 0)",
         )
 
         self.entity.port.add(
-            name        = "out_spike",
-            direction   = "out",
-            port_type   = "std_logic",
+            name="out_spike",
+            direction="out",
+            port_type="std_logic",
         )
 
         self.entity.port.add(
-            name        = "out_spike_addr",
-            direction   = "in",
-            port_type   = "std_logic_vector(" +
-                    str(self.out_addr_bw - 1) + " downto 0)",
+            name="out_spike_addr",
+            direction="in",
+            port_type="std_logic_vector(" + str(self.out_addr_bw - 1) + " downto 0)",
         )
 
         self.architecture.component.add(self.net)
@@ -491,102 +450,112 @@ class FullAccelerator(VHDLblock):
         self.architecture.component.add(self.ff)
 
         self.architecture.signal.add(
-            name        = "en",
-            signal_type = "std_logic_vector(" +
-                    str(2**self.in_addr_bw-1)
-                    + " downto 0)",
+            name="en",
+            signal_type="std_logic_vector("
+            + str(2**self.in_addr_bw - 1)
+            + " downto 0)",
         )
 
         self.architecture.signal.add(
-            name        = "in_spikes",
-            signal_type = "std_logic_vector(" +
-                    str(2**self.in_addr_bw-1)
-                    + " downto 0)",
+            name="in_spikes",
+            signal_type="std_logic_vector("
+            + str(2**self.in_addr_bw - 1)
+            + " downto 0)",
         )
 
         self.architecture.signal.add(
-            name        = "out_spikes",
-            signal_type = "std_logic_vector(" +
-                    str(self.output_size-1)
-                    + " downto 0)",
+            name="out_spikes",
+            signal_type="std_logic_vector(" + str(self.output_size - 1) + " downto 0)",
         )
 
         ff_instance = Instance(self.ff, "spike_reg_i")
-        ff_instance.port_map("key", **{
-            "clk"       : "clk",
-            "reg_in"    : "in_spike",
-            "en"        : "en(i)",
-            "reg_out"   : "in_spikes(i)"})
+        ff_instance.port_map(
+            "key",
+            **{
+                "clk": "clk",
+                "reg_in": "in_spike",
+                "en": "en(i)",
+                "reg_out": "in_spikes(i)",
+            },
+        )
 
         spikes_sample = For(
-            name        = "spikes",
-            start       = 0,
-            stop        = self.input_size-1,
-            loop_type   = "generate",
+            name="spikes",
+            start=0,
+            stop=self.input_size - 1,
+            loop_type="generate",
         )
 
         spikes_sample.body.add(ff_instance)
 
         self.architecture.bodyCodeHeader.add(spikes_sample)
 
-        self.architecture.instances.add(self.input_decoder,
-                "input_decoder")
-        self.architecture.instances["input_decoder"].generic_map("key",
-            **{"bitwidth"   : str(self.in_addr_bw)})
-        self.architecture.instances["input_decoder"].port_map("key", **{
-            "encoded_in"    : "in_spike_addr",
-            "decoded_out"   : "en"},
+        self.architecture.instances.add(self.input_decoder, "input_decoder")
+        self.architecture.instances["input_decoder"].generic_map(
+            "key", **{"bitwidth": str(self.in_addr_bw)}
+        )
+        self.architecture.instances["input_decoder"].port_map(
+            "key",
+            **{"encoded_in": "in_spike_addr", "decoded_out": "en"},
         )
 
-        self.architecture.instances.add(self.output_mux,
-                "output_mux")
+        self.architecture.instances.add(self.output_mux, "output_mux")
         self.architecture.instances["output_mux"].port_map()
 
         if self.output_size > 2:
             self.architecture.instances["output_mux"].p_map.add(
-                "mux_sel", "out_spike_addr",
+                "mux_sel",
+                "out_spike_addr",
             )
 
         elif self.output_size <= 2:
             self.architecture.instances["output_mux"].p_map.add(
-                "mux_sel", "out_spike_addr(0)",
+                "mux_sel",
+                "out_spike_addr(0)",
             )
 
         for i in range(self.output_size):
             self.architecture.instances["output_mux"].p_map.add(
-                "in" + str(i), "out_spikes(" + str(i) + ")",
+                "in" + str(i),
+                "out_spikes(" + str(i) + ")",
             )
 
         if self.output_size < 2**self.out_addr_bw:
-            for i in range(self.output_size,
-            2**self.out_addr_bw):
+            for i in range(self.output_size, 2**self.out_addr_bw):
                 self.architecture.instances["output_mux"].p_map.add(
-                    "in" + str(i), "\'0\'",
+                    "in" + str(i),
+                    "'0'",
                 )
 
         self.architecture.instances["output_mux"].p_map.add(
-            "mux_out", "out_spike",
+            "mux_out",
+            "out_spike",
         )
 
-        self.architecture.instances.add(self.net,
-                "snn")
+        self.architecture.instances.add(self.net, "snn")
         self.architecture.instances["snn"].generic_map()
         self.architecture.instances["snn"].port_map()
 
         if self.input_size < 2**self.in_addr_bw:
             self.architecture.instances["snn"].p_map.add(
-                "in_spikes", "in_spikes(" +
-                str(self.input_size-1)  + " downto 0)",
+                "in_spikes",
+                "in_spikes(" + str(self.input_size - 1) + " downto 0)",
             )
 
 
 class FullAccelerator_tb(Testbench):
-
-    def __init__(self, full_accelerator, clock_period = 20, file_output =
-            False, output_dir = "output", file_input = False,
-            input_dir = "", input_signal_list = [], debug = False,
-            debug_list = []):
-
+    def __init__(
+        self,
+        full_accelerator,
+        clock_period=20,
+        file_output=False,
+        output_dir="output",
+        file_input=False,
+        input_dir="",
+        input_signal_list=[],
+        debug=False,
+        debug_list=[],
+    ):
 
         self.spiker_pkg = SpikerPackage()
 
@@ -594,43 +563,43 @@ class FullAccelerator_tb(Testbench):
         self.components = sub_components(self)
 
         super().__init__(
-            dut = self.dut,
-            clock_period = clock_period,
-            file_output = file_output,
-            output_dir = output_dir,
-            file_input = file_input,
-            input_dir = input_dir,
-            input_signal_list = input_signal_list,
+            dut=self.dut,
+            clock_period=clock_period,
+            file_output=file_output,
+            output_dir=output_dir,
+            file_input=file_input,
+            input_dir=input_dir,
+            input_signal_list=input_signal_list,
         )
 
         self.vhdl(
-            clock_period        = clock_period,
-            file_output     = file_output,
-            output_dir      = output_dir,
-            file_input      = file_input,
-            input_dir       = input_dir,
-            input_signal_list   = input_signal_list,
-            )
+            clock_period=clock_period,
+            file_output=file_output,
+            output_dir=output_dir,
+            file_input=file_input,
+            input_dir=input_dir,
+            input_signal_list=input_signal_list,
+        )
 
-
-    def vhdl(self, clock_period = 20, file_output = False, output_dir =
-            "output", file_input = False, input_dir = "",
-            input_signal_list = []):
+    def vhdl(
+        self,
+        clock_period=20,
+        file_output=False,
+        output_dir="output",
+        file_input=False,
+        input_dir="",
+        input_signal_list=[],
+    ):
 
         self.library.add("work")
         self.library["work"].package.add("spiker_pkg")
 
         # rst_n
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '1';")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "wait for 15 ns;")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '0';")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "wait for 10 ns;")
-        self.architecture.processes["rst_n_gen"].bodyHeader.add(
-                "rst_n <= '1';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '1';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("wait for 15 ns;")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '0';")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("wait for 10 ns;")
+        self.architecture.processes["rst_n_gen"].bodyHeader.add("rst_n <= '1';")
 
         # Start
         ready_if = If()
@@ -639,36 +608,34 @@ class FullAccelerator_tb(Testbench):
         ready_if._else_.body.add("start <= '0';")
 
         self.architecture.processes["start_gen"].final_wait = False
-        self.architecture.processes["start_gen"].sensitivity_list.\
-            add("clk")
+        self.architecture.processes["start_gen"].sensitivity_list.add("clk")
         self.architecture.processes["start_gen"].if_list.add()
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            conditions.add("clk'event")
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            conditions.add("clk = '1'", "and")
-        self.architecture.processes["start_gen"].if_list[0]._if_.\
-            body.add(ready_if)
+        self.architecture.processes["start_gen"].if_list[0]._if_.conditions.add(
+            "clk'event"
+        )
+        self.architecture.processes["start_gen"].if_list[0]._if_.conditions.add(
+            "clk = '1'", "and"
+        )
+        self.architecture.processes["start_gen"].if_list[0]._if_.body.add(ready_if)
 
         if file_input and "in_spikes" in input_signal_list:
             del self.architecture.processes["in_spikes_rd_en_gen"]
 
-            self.architecture.bodyCodeHeader.add(
-                "in_spikes_rd_en <= sample;")
-            self.architecture.bodyCodeHeader.add(
-                "out_spikes_w_en <= sample;")
+            self.architecture.bodyCodeHeader.add("in_spikes_rd_en <= sample;")
+            self.architecture.bodyCodeHeader.add("out_spikes_w_en <= sample;")
 
             self.architecture.processes["in_spikes_gen"].bodyHeader.add(
-                "sample_ready <= '0';")
+                "sample_ready <= '0';"
+            )
 
         del self.architecture.processes["sample_ready_gen"]
         self.architecture.bodyCodeHeader.add("sample_ready <= sample;")
 
 
-
 class NetworkSimulator:
-
-    def __init__(self, vhdl_net, clock_period = 20, output_dir = "output",
-            readout_type = "mem_avg"):
+    def __init__(
+        self, vhdl_net, clock_period=20, output_dir="output", readout_type="mem_avg"
+    ):
 
         self.supported_readouts = [
             "mem_softmax",
@@ -677,18 +644,22 @@ class NetworkSimulator:
         ]
 
         if readout_type in self.supported_readouts:
-            self.readout_type   = readout_type
+            self.readout_type = readout_type
 
         else:
-            raise ValueError("Invalid readout type. Choose between " +
-                    str(self.supported_readouts) + "\n")
+            raise ValueError(
+                "Invalid readout type. Choose between "
+                + str(self.supported_readouts)
+                + "\n"
+            )
 
-        self.testbench = Network_tb(vhdl_net,
-            clock_period        = clock_period,
-            output_dir          = output_dir,
-            file_output         = True,
-            file_input          = True,
-            input_signal_list   = ["in_spikes"],
+        self.testbench = Network_tb(
+            vhdl_net,
+            clock_period=clock_period,
+            output_dir=output_dir,
+            file_output=True,
+            file_input=True,
+            input_signal_list=["in_spikes"],
         )
 
         self.output_dir = output_dir
@@ -696,23 +667,19 @@ class NetworkSimulator:
         self.readout_file = self.output_dir + "/neuron_dp_none_v.txt"
 
         if "mem" in readout_type:
-
-            del self.testbench.architecture.processes[
-                    "neuron_dp_none_v_w_en_gen"
-            ]
+            del self.testbench.architecture.processes["neuron_dp_none_v_w_en_gen"]
 
             self.testbench.architecture.bodyCodeHeader.add(
-                    "neuron_dp_none_v_w_en <= sample;",
+                "neuron_dp_none_v_w_en <= sample;",
             )
 
         write_vhdl(self.testbench)
         compile_vhdl(self.testbench)
         elaborate_vhdl(self.testbench)
 
+    def simulate(self, dataloader, sim_duration="10000ns", print_interval=10):
 
-    def simulate(self, dataloader, sim_duration = "10000ns", print_interval = 10):
-
-        torch.set_printoptions(threshold = np.inf)
+        torch.set_printoptions(threshold=np.inf)
 
         acc = 0
         iter_count = 0
@@ -721,9 +688,7 @@ class NetworkSimulator:
 
         # Iterate over the dataloader
         for batch_idx, (data_batch, labels_batch) in enumerate(dataloader):
-
             for i in range(data_batch.shape[0]):
-
                 spike_trains = data_batch[i, :, :].to(int)
                 label = labels_batch[i].item()
 
@@ -733,11 +698,10 @@ class NetworkSimulator:
                 log_message = log_message + ". Classified: " + str(classified)
                 logging.info(log_message)
 
-                acc += (classified == label)
+                acc += classified == label
 
                 if iter_count == (print_interval - 1):
-
-                    acc = acc / (iter_count+1) * 100
+                    acc = acc / (iter_count + 1) * 100
 
                     log_message = "Accuracy: " + f"{acc:.2f}" + "%\n"
                     logging.info(log_message)
@@ -746,25 +710,23 @@ class NetworkSimulator:
 
                 iter_count = (iter_count + 1) % print_interval
 
-
     def inference(self, spike_trains, sim_duration):
 
-            self.dump(spike_trains, self.stimuli_file)
+        self.dump(spike_trains, self.stimuli_file)
 
-            simulate_vhdl(self.testbench, output_dir = self.output_dir,
-                    sim_duration = sim_duration)
+        simulate_vhdl(
+            self.testbench, output_dir=self.output_dir, sim_duration=sim_duration
+        )
 
-            mem_out = self.load(self.readout_file)
+        mem_out = self.load(self.readout_file)
 
-            _, classified = mem_out.mean(dim=0).max(dim=0)
+        _, classified = mem_out.mean(dim=0).max(dim=0)
 
-            return classified.item()
-
+        return classified.item()
 
     def dump(self, spike_trains, filename):
 
         if spike_trains.shape[0] != self.testbench.dut.n_cycles:
-
             log_message = "Number of input timestes differ network's one. "
             log_message += "Expected "
             log_message += str(self.testbench.dut.n_cycles)
@@ -774,11 +736,10 @@ class NetworkSimulator:
             logging.warning(log_message)
 
         with open(filename, "w") as file:
-
             for timestep in spike_trains:
-                file.write("".join(map(str,
-                torch.flip(timestep, dims = (0,)).tolist())) + "\n")
-
+                file.write(
+                    "".join(map(str, torch.flip(timestep, dims=(0,)).tolist())) + "\n"
+                )
 
     def load(self, filename):
 
@@ -790,18 +751,15 @@ class NetworkSimulator:
         mem_out = []
 
         with open(filename) as file:
-
             for line in file:
-
                 line = line[:-1]
 
-                if set(line) - {'0', '1'}:
+                if set(line) - {"0", "1"}:
                     raise ValueError("String must be binary")
 
                 mem_out_t = []
 
                 for i in range(0, len(line), bitwidth):
-
                     mem_binary = line[i : i + bitwidth]
 
                     mem = self.ca2_to_signed(mem_binary, bitwidth)
@@ -816,7 +774,6 @@ class NetworkSimulator:
         mem_out = mem_out.flip(dims=(1,))
 
         if mem_out.shape[0] != self.testbench.dut.n_cycles:
-
             log_message = "Number of output timesteps differs from network's"
             log_message += "one. Expected "
             log_message += str(self.testbench.dut.n_cycles)
@@ -826,7 +783,6 @@ class NetworkSimulator:
             logging.warning(log_message)
 
         if mem_out.shape[1] != self.testbench.dut[last_layer_key].n_neurons:
-
             log_message = "Number of neurons differs from the network's one. "
             log_message += "Expected "
             log_message += str(self.testbench.dut[last_layer_key].n_neurons)
@@ -837,13 +793,11 @@ class NetworkSimulator:
 
         return mem_out.to(float)
 
-
     def ca2_to_signed(self, binary_string, bitwidth):
 
         ca2_val = int(binary_string, 2)
 
-        if binary_string[0] == '1':
-
+        if binary_string[0] == "1":
             ca2_val = ca2_val - (1 << bitwidth)
 
         return ca2_val

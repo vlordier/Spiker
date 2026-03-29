@@ -7,8 +7,15 @@ from .vhdltools.vhdl_block import VHDLblock
 
 class Mux(VHDLblock):
     def __init__(
-        self, n_in=8, in_type="std_logic_vector", bitwidth=4, debug=True, debug_list=[],
+        self,
+        n_in=8,
+        in_type="std_logic_vector",
+        bitwidth=4,
+        debug=True,
+        debug_list=None,
     ):
+        if debug_list is None:
+            debug_list = []
 
         # Name
         self.name = "mux_" + str(ceil_pow2(n_in)) + "to1"
@@ -45,7 +52,9 @@ class Mux(VHDLblock):
         VHDLblock.__init__(self, entity_name=self.name)
         self.vhdl(debug=debug, debug_list=debug_list)
 
-    def vhdl(self, debug=False, debug_list=[]):
+    def vhdl(self, debug=False, debug_list=None):
+        if debug_list is None:
+            debug_list = []
 
         # Libraries and packages
         self.library.add("ieee")
@@ -95,7 +104,10 @@ class Mux(VHDLblock):
             sel_value = (
                 quote
                 + "{0:{fill}{width}{base}}".format(
-                    port_number, fill=0, width=self.n_sel, base="b",
+                    port_number,
+                    fill=0,
+                    width=self.n_sel,
+                    base="b",
                 )
                 + quote
             )

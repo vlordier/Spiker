@@ -16,6 +16,9 @@ from torch.utils.data import DataLoader
 from .device import get_device
 from .types import ReadoutType
 
+_DEFAULT_OUTPUT_DIR = "Trained"
+_DEFAULT_STATE_DICT_FILE = "trained_state_dict.pt"
+
 
 class Trainer:
     """Trainer for spiking neural networks.
@@ -94,7 +97,7 @@ class Trainer:
         n_epochs: int = 20,
         *,
         store: bool = False,
-        output_dir: str = "Trained",
+        output_dir: str = _DEFAULT_OUTPUT_DIR,
     ) -> None:
         """Train the network for a specified number of epochs.
 
@@ -315,7 +318,7 @@ class Trainer:
             os.makedirs(out_dir)
 
         if not out_file:
-            out_file = "trained_state_dict.pt"
+            out_file = _DEFAULT_STATE_DICT_FILE
 
         out_path = f"{out_dir}/{out_file}"
 

@@ -226,7 +226,7 @@ def track_signals(signals_dict, name):
     return tracked
 
 
-def debug_component(component, db_list=[]):
+def debug_component(component, db_list: list[str] | None = None):
 
     attr_list = [attr for attr in dir(component) if not attr.startswith("__")]
 

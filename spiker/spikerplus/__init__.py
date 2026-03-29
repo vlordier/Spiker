@@ -13,6 +13,7 @@ This package provides:
 """
 
 from .device import get_device as get_device
+from .device import get_device_name as get_device_name
 from .device import to_device as to_device
 from .exceptions import (
     DataLoaderError,
@@ -54,6 +55,7 @@ from .vhdl_generator import VhdlGenerator
 __all__ = [
     # Device
     "get_device",
+    "get_device_name",
     "to_device",
     # Exceptions
     "DataLoaderError",
