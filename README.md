@@ -7,6 +7,40 @@
 
 Spiker is a comprehensive framework for generating efficient, low-power, and low-area customized Spiking Neural Networks (SNN) accelerators on FPGA for inference at the edge. It presents a library of highly efficient neuron architectures and a design framework, enabling the development of complex neural network accelerators with minimal Python code.
 
+```mermaid
+graph TD
+    subgraph python["Python API"]
+        NB[NetBuilder<br/>Build SNN]
+        TR[Trainer<br/>Train Model]
+        OPT[Optimizer<br/>Hardware Config]
+    end
+
+    subgraph hardware["Hardware Generation"]
+        VHDL_GEN[VhdlGenerator]
+        VHDL_LIB[VHDL Component Lib]
+    end
+
+    subgraph output["FPGA Output"]
+        VHDL_CODE[Synthesizable VHDL]
+        SIM[Simulation]
+    end
+
+    NB --> TR
+    TR --> OPT
+    OPT --> VHDL_GEN
+    VHDL_GEN --> VHDL_LIB
+    VHDL_LIB --> VHDL_CODE
+    VHDL_CODE --> SIM
+
+    classDef python fill:#e3f2fd,stroke:#1976d2,color:#000
+    classDef hardware fill:#fff3e0,stroke:#f57c00,color:#000
+    classDef output fill:#e8f5e9,stroke:#388e3c,color:#000
+
+    class NB,TR,OPT python
+    class VHDL_GEN,VHDL_LIB hardware
+    class VHDL_CODE,SIM output
+```
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Features](#features)
@@ -41,7 +75,6 @@ Spiker provides an end-to-end workflow for designing SNN hardware accelerators:
 Spiker/
 ├── spiker/                 # Main Python package
 │   ├── __init__.py         # Package exports
-│   ├── setup.py            # Installation script (legacy)
 │   └── spikerplus/         # Core implementation
 │       ├── __init__.py     # Module exports
 │       ├── net_builder.py  # SNN construction utilities
@@ -71,7 +104,7 @@ uv pip install spikerplus
 ### From Source
 ```bash
 git clone https://github.com/smilies-polito/Spiker.git
-cd Spiker/spiker
+cd Spiker
 pip install .
 ```
 

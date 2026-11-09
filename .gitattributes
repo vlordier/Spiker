@@ -1,0 +1,78 @@
+# Default to LF line endings for text files
+* text=auto eol=lf
+
+# Python files
+*.py text
+
+# Documentation
+*.md text
+*.rst text
+*.txt text
+
+# Configuration
+*.toml text
+*.yaml text
+*.yml text
+*.json text
+*.cfg text
+*.ini text
+
+# Shell scripts
+*.sh text
+
+# Binary data files
+*.tflite binary
+*.npz binary
+*.npy binary
+*.pt binary
+*.pth binary
+*.h5 binary
+*.hdf5 binary
+*.wav binary
+*.gz binary
+*.h5* binary
+
+# VHDL generated artifacts (not tracked in git)
+*.vhd export-ignore
+*.v export-ignore
+*.coe binary
+*.mem binary
+*.mif binary
+
+# Vivado artifacts (not tracked)
+*.jou export-ignore
+*.log export-ignore
+*.pb export-ignore
+*.dir export-ignore
+*.str export-ignore
+*.cache export-ignore
+*.hw export-ignore
+*.ip_user_files export-ignore
+*.sim export-ignore
+*.xpr export-ignore
+*.runs export-ignore
+*.srcs export-ignore
+*.gen export-ignore
+*.xilinx export-ignore
+*.wcfg export-ignore
+*.debug export-ignore
+
+# Archive files
+*.zip binary
+*.whl binary
+*.egg binary
+*.sif binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg text
+
+# OS files
+.DS_Store binary
+Thumbs.db binary
+
+# Temporary files
+*.tmp export-ignore
